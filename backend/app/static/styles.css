@@ -150,6 +150,15 @@ a:hover { text-decoration: underline; }
 .civ-chip { display: inline-flex; align-items: center; gap: 3px; font-size: 12px; color: var(--muted); }
 .civ-chip img { width: 20px; height: 20px; border-radius: 4px; }
 
+.playstyle { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--border); }
+.section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--gold); }
+.section-title .muted { text-transform: none; letter-spacing: 0; }
+.playstyle .loading { margin-top: 6px; }
+.chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.chip { font-size: 12px; padding: 2px 7px; border-radius: 5px; background: var(--panel-2); }
+.chip b { color: var(--muted); font-weight: 600; margin-left: 2px; }
+.tag-tendency { color: var(--gold); border-color: color-mix(in srgb, var(--gold) 40%, transparent); background: color-mix(in srgb, var(--gold) 10%, transparent); }
+
 .loading { margin-top: 10px; color: var(--muted); animation: pulse 1.5s infinite; }
 .error { margin-top: 10px; color: var(--strong); }
 
@@ -159,3 +168,6 @@ a:hover { text-decoration: underline; }
   .teams { grid-template-columns: 1fr; }
   .stats { grid-template-columns: repeat(2, 1fr); }
 }
+
+.playstyle .stats { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 520px) { .playstyle .stats { grid-template-columns: repeat(2, 1fr); } }

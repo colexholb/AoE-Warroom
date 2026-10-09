@@ -179,7 +179,59 @@ function PlayerCard({ player: p }) {
         : p.loading ? html`<div class="loading">Pulling match history…</div>`
         : a?.error ? html`<div class="error">Couldn't load history: ${a.error}</div>`
         : a && html`<${CardBody} a=${a} />`}
+      ${p.playstyle && html`<${Playstyle} s=${p.playstyle} />`}
     </article>
+  `;
+}
+
+function Playstyle({ s }) {
+  if (s.status === "loading") {
+    return html`
+      <div class="playstyle">
+        <div class="section-title">Playstyle</div>
+        <div class="loading">Reading replays ${s.done}/${s.target}…</div>
+      </div>`;
+  }
+  if (!s.games) {
+    return html`
+      <div class="playstyle">
+        <div class="section-title">Playstyle</div>
+        <div class="muted small">No recent replays available</div>
+      </div>`;
+  }
+  const pocket = s.positions.pocket.games;
+  const flank = s.positions.flank.games;
+  return html`
+    <div class="playstyle">
+      <div class="section-title">Playstyle <span class="muted">· last ${games(s.games)} with replays</span></div>
+      ${s.insights.length > 0 && html`
+        <ul class="insights">
+          ${s.insights.map((i) => html`<li class=${`tag tag-${i.kind}`}>${i.text}</li>`)}
+        </ul>`}
+      <div class="row">
+        <span class="label">Opens</span>
+        <span class="chips">
+          ${s.openings.map((o) => html`<span class="chip">${o.label} <b>${o.count}/${s.games}</b></span>`)}
+        </span>
+      </div>
+      <div class="stats">
+        <${Stat} label="Feudal" value=${s.feudal ? `~${s.feudal}` : "–"} title="Median time Feudal Age was reached" />
+        <${Stat} label="Castle" value=${s.castle ? `~${s.castle}` : "–"} title="Median time Castle Age was reached" />
+        <${Stat} label="TCs by 25 min" value=${s.avg_tcs_by_25 ?? "–"}
+                 title=${`Average over ${games(s.long_games)} that lasted 25+ minutes`} />
+        ${pocket + flank > 0 && html`
+          <${Stat} label="Position" value=${`Pocket ${pocket} · Flank ${flank}`}
+                   title=${`Pocket ${s.positions.pocket.wins}-${s.positions.pocket.decided - s.positions.pocket.wins}, `
+                           + `flank ${s.positions.flank.wins}-${s.positions.flank.decided - s.positions.flank.wins}`} />`}
+      </div>
+      ${s.armies.length > 0 && html`
+        <div class="row">
+          <span class="label">Army</span>
+          <span class="chips">
+            ${s.armies.map((a) => html`<span class="chip">${a.unit} <b>${a.count}</b></span>`)}
+          </span>
+        </div>`}
+    </div>
   `;
 }
 

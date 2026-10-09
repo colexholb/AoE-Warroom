@@ -25,6 +25,20 @@ Requires **Record game** to be on in AoE2 settings.
 - `backend/app/aoe2companion.py` pulls each player's profile and last 300 matches from the public
   aoe2companion API (cached for 5 min).
 - `backend/app/stats.py` turns history into stats, insight tags and a threat score.
+- `backend/app/replay.py` reads the first 35 minutes of a recording's action stream (via `mgz`'s
+  fast operation parser) and works out each player's opening (Drush, Scouts, Archers, M@A, FC,
+  tower rush…), age-up times, Town Centers by minute 25, main Castle Age army, and pocket vs flank
+  (from where their early houses and camps went up).
+- `backend/app/replay_store.py` downloads players' recent replays from the official replay server
+  (`aoe.ms/replay`), analyzes them and caches the results in `backend/cache/warroom.db`. Your own
+  finished recordings are indexed too, which covers lobby games the API doesn't list.
+- `backend/app/playstyle.py` turns up to 10 analyzed games per player into tendencies ("Opens FC in
+  7/10 games", "Big boomer", "Usually plays pocket", "Weak on flank: 1-4") with counter advice for
+  enemies.
+
+**Fair play:** only past games are analyzed. The recording of the game in progress is never read
+past its header (the lobby info you see on the loading screen anyway), and nothing that started
+after it is used.
 - `backend/app/static/` is the UI: plain Preact + htm, no build step. Updates arrive over
   server-sent events (`/api/events`).
 
@@ -40,9 +54,9 @@ Requires **Record game** to be on in AoE2 settings.
 ## Roadmap
 
 1. ✅ Live lobby detection + match-history scouting
-2. Replay parsing for strategy: openings (drush / scouts / archers / FC), age-up times, TC count
-   (booms), pocket vs flank from start positions
-3. Persisting history locally (SQLite) to track opponents you meet repeatedly
+2. ✅ Replay parsing for strategy: openings, age-up times, TC count (booms), main army,
+   pocket vs flank
+3. Track opponents you meet repeatedly (head-to-head record, notes)
 4. (Secondary) Meta stats: civ / map / matchup win rates for the current patch at your Elo.
    aoestats.io stopped updating in Feb 2026 and aoe2insights' stats API is off-limits to bots
    (`robots.txt`), so the plan is to sample ~100 players near your rating from the aoe2companion

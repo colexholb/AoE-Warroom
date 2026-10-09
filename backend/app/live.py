@@ -8,19 +8,25 @@ import logging
 import os
 import time
 from collections import Counter
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+import httpx
 from watchfiles import Change, awatch
 
 from . import config
 from .aoe2companion import Aoe2CompanionClient
+from .playstyle import summarize
 from .record_header import RecordInfo, parse_record
+from .replay_store import ReplayService, game_from_row
 from .stats import GameContext, analyze_player, team_summary
 
 log = logging.getLogger(__name__)
 
 RECORD_SUFFIX = ".aoe2record"
+# Past games per player to pull strategy from, and how many recent matches to try for them.
+REPLAY_SAMPLE = 10
+REPLAY_CANDIDATES = 25
 
 
 def list_recordings(limit: int = 30) -> list[Path]:
@@ -46,8 +52,9 @@ def detect_my_profile() -> int | None:
 
 
 class LiveService:
-    def __init__(self, client: Aoe2CompanionClient) -> None:
+    def __init__(self, client: Aoe2CompanionClient, replays: ReplayService) -> None:
         self.client = client
+        self.replays = replays
         self.me: int | None = None
         self.state: dict = {"status": "waiting", "match": None, "players": [], "summary": None}
         self._subscribers: set[asyncio.Queue[str]] = set()
@@ -67,6 +74,7 @@ class LiveService:
             await self.load(recent[0], live=self.is_fresh(recent[0]))
         if dirs:
             self._tasks.append(asyncio.create_task(self._watch(dirs)))
+            self._tasks.append(asyncio.create_task(self._index_local()))
         self._tasks.append(asyncio.create_task(self._liveness()))
 
     async def stop(self) -> None:
@@ -117,8 +125,8 @@ class LiveService:
             is_me = me is not None and p.number == me.number
             side = "me" if is_me else (
                 "ally" if my_team is not None and p.team == my_team else "enemy")
-            players.append({**p.__dict__, "is_me": is_me, "side": side,
-                            "analysis": None, "loading": p.profile_id is not None})
+            players.append({**p.__dict__, "is_me": is_me, "side": side, "analysis": None,
+                            "loading": p.profile_id is not None, "playstyle": None})
 
         self.state.update({
             "status": "live" if live else "finished",
@@ -151,6 +159,7 @@ class LiveService:
 
     async def _analyze(self, record: RecordInfo) -> None:
         is_team = _is_team_game(record)
+        history: dict[int, list[dict]] = {}
 
         async def one(p: dict) -> None:
             ctx = GameContext(civ_slug=p["civ_slug"], civ_name=p["civ"], map_name=record.map_name,
@@ -158,7 +167,11 @@ class LiveService:
             try:
                 profile, matches = await asyncio.gather(
                     self.client.profile(p["profile_id"]), self.client.matches(p["profile_id"]))
+                history[p["profile_id"]] = matches
                 p["analysis"] = analyze_player(p["profile_id"], profile, matches, ctx)
+            except httpx.HTTPStatusError as e:
+                log.warning("history failed for %s: %s", p["name"], e)
+                p["analysis"] = {"error": f"aoe2companion answered {e.response.status_code}"}
             except Exception as e:  # noqa: BLE001 - surface API failures on the card
                 log.exception("analysis failed for %s", p["name"])
                 p["analysis"] = {"error": str(e)}
@@ -166,11 +179,82 @@ class LiveService:
             self._publish()
 
         players = self.state["players"]
+        my_team = self.state["match"]["my_team"]
         # Enemies first: they're what you want to see in the first seconds of a game.
         order = sorted((p for p in players if p["profile_id"]), key=lambda p: p["side"] != "enemy")
         await asyncio.gather(*(one(p) for p in order))
-        self.state["summary"] = team_summary(players, self.state["match"]["my_team"])
+        self.state["summary"] = team_summary(players, my_team)
         self._publish()
+
+        # Second, slower pass: strategy from their recent replays.
+        await asyncio.gather(*(self._playstyle(p, history.get(p["profile_id"], []), record, is_team)
+                               for p in order))
+        self.state["summary"] = team_summary(players, my_team)
+        self._publish()
+
+    async def _playstyle(self, p: dict, matches: list[dict], record: RecordInfo, is_team: bool) -> None:
+        pid = p["profile_id"]
+        # Never look at the game being played (or anything after it): past games only.
+        cutoff = (record.started or datetime.now(timezone.utc)) - timedelta(minutes=2)
+        current_file = Path(record.path).name
+
+        def started(m: dict) -> datetime:
+            return datetime.fromisoformat(m["started"].replace("Z", "+00:00"))
+
+        def same_kind(teams: list[int]) -> bool:
+            return any(n > 1 for n in Counter(teams).values()) == is_team
+
+        dated = [m for m in matches if m.get("started")]
+        results = {started(m): next((pl.get("won") for t in m.get("teams", []) for pl in t["players"]
+                                     if pl.get("profileId") == pid), None) for m in dated}
+        queue: list[tuple[datetime, dict | None, dict | None]] = []  # (when, api match, local game)
+        for m in dated:
+            teams = [t["teamId"] for t in m.get("teams", []) for _ in t["players"]]
+            # Only normal Dark Age starts have an opening worth reading (skip EW, DM, ...).
+            dark_start = m.get("startingAge") == 2 and m.get("gameMode") == "random_map"
+            if started(m) < cutoff and same_kind(teams) and dark_start:
+                queue.append((started(m), m, None))
+        queue = queue[:REPLAY_CANDIDATES]
+
+        # Your own recordings cover lobby games the API never saw.
+        for row in await asyncio.to_thread(self.replays.store.local_games, pid):
+            game = game_from_row(row)
+            when = datetime.fromisoformat(game["started"]) if game["started"] else None
+            if when is None or when >= cutoff or row["key"] == f"local:{current_file}":
+                continue
+            if any(abs((when - t).total_seconds()) < 180 for t in results):
+                continue  # same match as an API one, which finds this local copy itself
+            if same_kind([pl["team"] for pl in game["players"] if pl["team"] is not None]):
+                queue.append((when, None, game))
+        queue.sort(key=lambda item: item[0], reverse=True)
+
+        games: list[dict] = []
+        p["playstyle"] = {"status": "loading", "done": 0, "target": min(REPLAY_SAMPLE, len(queue))}
+        self._publish()
+        for when, match, game in queue:
+            if len(games) >= REPLAY_SAMPLE:
+                break
+            if game is None:
+                game = await self.replays.match_game(match, pid)
+            mine = next((s for s in (game or {}).get("players", []) if s.get("profile_id") == pid), None)
+            if mine is None:
+                continue
+            games.append({"strategy": mine, "won": results.get(when), "map_name": game["map_name"],
+                          "game_seconds": game["game_seconds"] or 0})
+            p["playstyle"]["done"] = len(games)
+            self._publish()
+        p["playstyle"] = {"status": "done", **summarize(games, p["civ_slug"], enemy=p["side"] == "enemy")}
+        self._publish()
+
+    async def _index_local(self) -> None:
+        """Analyze finished recordings in the background so they can be reused for scouting."""
+        files = list_recordings(1000)
+        current = Path((self.state.get("match") or {}).get("path") or "").name
+        # Skip anything still being written: that's a game in progress.
+        skip = {f.name for f in files if self.is_fresh(f)} | {current}
+        added = await self.replays.index_local(files, skip)
+        if added:
+            log.info("indexed %d local recordings", added)
 
     # ---- background loops ------------------------------------------------------------------
 
@@ -189,6 +273,8 @@ class LiveService:
                 continue
             log.info("new recording %s", newest.name)
             await self.load(newest, live=True)
+            # The previous game just ended, so it can join the local index.
+            self._tasks.append(asyncio.create_task(self._index_local()))
 
     async def _liveness(self) -> None:
         while True:

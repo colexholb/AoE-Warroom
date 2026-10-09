@@ -6,7 +6,8 @@ so this reader only targets the few fields we need, which have been stable for y
 Start of the decompressed header:
 
     "VER 9.4\\0" | f32 | u32 | build u32 | start_timestamp u32 | 12 bytes
-    | dlc_count u32 | dlc_ids u32[count] | u32 | map_dimension u32 | u32 | map_id u32 ...
+    | dlc_count u32 | dlc_ids u32[count] | u32 | map_dimension u32 | map_id u32 | u32 | u32
+    | victory u32 | resources u32 | starting_age u32 | ending_age u32
 
 Player blocks, a little further in:
 
@@ -36,6 +37,7 @@ DE_STRING_MARKER = b"\x60\x0a"
 SCAN_BYTES = 8 * 1024
 HUMAN_TYPE = 2
 NO_TEAM = 1  # team byte 1 is the "-" option in the lobby; 2..5 are teams 1..4
+DARK_AGE_START = 2  # starting_age value for a normal Dark Age start (same code as the API)
 # aoe2companion slugs that don't follow lowercase-name-without-spaces.
 SLUG_OVERRIDES = {"Maya": "mayans"}
 
@@ -59,7 +61,13 @@ class RecordInfo:
     started: datetime | None
     map_id: int | None
     map_name: str | None
+    starting_age: int | None = None
     players: list[HeaderPlayer] = field(default_factory=list)
+
+    @property
+    def standard_start(self) -> bool:
+        """Dark Age start, so openings mean something (not Empire Wars / Death Match)."""
+        return self.starting_age == DARK_AGE_START
 
     def to_dict(self) -> dict:
         d = asdict(self)
@@ -84,6 +92,10 @@ def civ_slug(name: str) -> str:
     return SLUG_OVERRIDES.get(name, name.lower().replace(" ", ""))
 
 
+def object_name(object_id: int) -> str | None:
+    return _dataset()["objects"].get(str(object_id))
+
+
 def map_name(map_id: int) -> str | None:
     return _dataset()["maps"].get(str(map_id))
 
@@ -92,7 +104,10 @@ def read_header(path: str | Path) -> bytes:
     """Return the start of the decompressed header of a recording."""
     with open(path, "rb") as f:
         # Only the first chunk of the compressed stream is needed for SCAN_BYTES of output.
-        raw = f.read(512 * 1024)
+        return decompress_header(f.read(512 * 1024))
+
+
+def decompress_header(raw: bytes) -> bytes:
     if len(raw) < 8:
         raise ValueError("file too short to contain a header")
     header_len = struct.unpack_from("<I", raw, 0)[0]
@@ -175,17 +190,18 @@ def _parse_players(buf: bytes) -> list[HeaderPlayer]:
     return sorted(by_number.values(), key=lambda p: p.number)
 
 
-def _parse_settings(buf: bytes) -> tuple[datetime | None, int | None]:
+def _parse_settings(buf: bytes) -> tuple[datetime | None, int | None, int | None]:
     try:
         (timestamp,) = struct.unpack_from("<I", buf, 20)
         (dlc_count,) = struct.unpack_from("<I", buf, 36)
         if dlc_count > 200:
-            return None, None
-        (map_id,) = struct.unpack_from("<I", buf, 40 + 4 * dlc_count + 8)
+            return None, None, None
+        settings = struct.unpack_from("<9I", buf, 40 + 4 * dlc_count)
     except struct.error:
-        return None, None
+        return None, None, None
+    map_id, starting_age = settings[2], settings[7]
     started = datetime.fromtimestamp(timestamp, timezone.utc) if timestamp > 1_500_000_000 else None
-    return started, map_id
+    return started, map_id, starting_age
 
 
 def parse_players(path: str | Path) -> list[HeaderPlayer]:
@@ -193,13 +209,21 @@ def parse_players(path: str | Path) -> list[HeaderPlayer]:
 
 
 def parse_record(path: str | Path) -> RecordInfo:
-    buf = read_header(path)
-    started, map_id = _parse_settings(buf)
+    return _record_from_header(read_header(path), str(path))
+
+
+def parse_record_bytes(raw: bytes, path: str = "") -> RecordInfo:
+    return _record_from_header(decompress_header(raw), path)
+
+
+def _record_from_header(buf: bytes, path: str) -> RecordInfo:
+    started, map_id, starting_age = _parse_settings(buf)
     return RecordInfo(
-        path=str(path),
+        path=path,
         started=started,
         map_id=map_id,
         map_name=map_name(map_id) if map_id is not None else None,
+        starting_age=starting_age,
         players=_parse_players(buf),
     )
 

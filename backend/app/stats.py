@@ -307,7 +307,8 @@ def team_summary(players: list[dict], my_team: int | None) -> dict:
     threat = max(scored, key=lambda p: p["analysis"]["threat"])
 
     def reasons(p: dict, kind: str) -> list[str]:
-        found = [i["text"] for i in p["analysis"]["insights"] if i["kind"] == kind][:3]
+        insights = p["analysis"]["insights"] + ((p.get("playstyle") or {}).get("insights") or [])
+        found = [i["text"] for i in insights if i["kind"] == kind][:3]
         rating = p["analysis"]["rating"]["rating"]
         extreme = "Lowest" if kind == "weakness" else "Highest"
         return found or [f"{extreme} rated enemy after adjusting for civ and form ({rating} rating)"]

@@ -16,6 +16,7 @@ from pydantic import BaseModel
 
 from .aoe2companion import Aoe2CompanionClient
 from .live import LiveService, list_recordings
+from .replay_store import ReplayService, ReplayStore
 from .record_header import parse_record
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -28,12 +29,14 @@ ICON_CDN = "https://backend.cdn.aoe2companion.com/public/aoe2/de/civilizations"
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     client = Aoe2CompanionClient()
-    service = LiveService(client)
+    replays = ReplayService(ReplayStore())
+    service = LiveService(client, replays)
     app.state.live = service
     await service.start()
     yield
     await service.stop()
     await client.close()
+    await replays.close()
 
 
 app = FastAPI(title="AoE Warroom", lifespan=lifespan)
