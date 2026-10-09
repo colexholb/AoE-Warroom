@@ -1,0 +1,161 @@
+:root {
+  --bg: #12100d;
+  --panel: #1c1915;
+  --panel-2: #25211b;
+  --border: #3a332a;
+  --text: #ece4d6;
+  --muted: #9b9081;
+  --gold: #d9a441;
+  --weak: #4cc38a;   /* exploitable */
+  --strong: #ff6b5b; /* respect */
+  --info: #8aa4c8;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+a { color: inherit; text-decoration: none; }
+a:hover { text-decoration: underline; }
+.muted { color: var(--muted); }
+.small { font-size: 12px; }
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 20px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.brand { font-weight: 700; color: var(--gold); letter-spacing: 0.5px; }
+.meta { color: var(--muted); }
+.meta b { color: var(--text); }
+.spacer { flex: 1; }
+
+.status {
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+}
+.status-live { background: #3b1414; border-color: #a33; color: #ff8a80; }
+.status-live::before { content: "● "; animation: pulse 1.5s infinite; }
+.status-offline { color: var(--strong); }
+@keyframes pulse { 50% { opacity: 0.3; } }
+
+.picker {
+  background: var(--panel-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 8px;
+  max-width: 260px;
+}
+
+.empty { text-align: center; padding: 80px 20px; }
+.empty h2 { color: var(--gold); }
+
+.plan {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+  padding: 16px 20px 0;
+}
+.plan.muted { display: block; }
+.plan-item {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+.plan-title { font-size: 12px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--gold); margin-bottom: 6px; }
+.plan-player { font-size: 16px; }
+.plan-item ul { margin: 6px 0 0; padding-left: 18px; color: var(--muted); }
+.ratings .mine { color: var(--gold); }
+
+.teams {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 20px;
+  padding: 16px 20px 40px;
+}
+.team h2 {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0 0 10px;
+}
+.team.enemy h2 { color: var(--strong); }
+.team.ally h2 { color: var(--weak); }
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--player);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+.card.side-me { box-shadow: 0 0 0 1px var(--gold) inset; }
+
+.card-head { display: flex; align-items: center; gap: 10px; }
+.civ-icon { width: 40px; height: 40px; border-radius: 6px; background: var(--panel-2); }
+.who { flex: 1; min-width: 0; }
+.name { font-size: 16px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sub { color: var(--muted); font-size: 12px; }
+.you { margin-left: 6px; font-size: 11px; color: var(--bg); background: var(--gold); padding: 0 6px; border-radius: 4px; }
+.dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; vertical-align: 0; }
+.rating { text-align: right; }
+.rating b { display: block; font-size: 18px; }
+.rating span { font-size: 11px; color: var(--muted); }
+
+.insights { list-style: none; padding: 0; margin: 10px 0 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.tag { font-size: 12px; padding: 3px 8px; border-radius: 6px; border: 1px solid; }
+.tag-weakness { color: var(--weak); border-color: color-mix(in srgb, var(--weak) 40%, transparent); background: color-mix(in srgb, var(--weak) 10%, transparent); }
+.tag-strength { color: var(--strong); border-color: color-mix(in srgb, var(--strong) 40%, transparent); background: color-mix(in srgb, var(--strong) 10%, transparent); }
+.tag-info { color: var(--info); border-color: color-mix(in srgb, var(--info) 40%, transparent); background: color-mix(in srgb, var(--info) 10%, transparent); }
+.side-ally .tag-weakness, .side-me .tag-weakness { color: #e0b25a; border-color: #e0b25a55; background: #e0b25a14; }
+.side-ally .tag-strength, .side-me .tag-strength { color: var(--weak); border-color: color-mix(in srgb, var(--weak) 40%, transparent); background: color-mix(in srgb, var(--weak) 10%, transparent); }
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-top: 10px;
+}
+.stat { background: var(--panel-2); border-radius: 6px; padding: 5px 8px; }
+.stat span { display: block; font-size: 11px; color: var(--muted); }
+.stat b { font-size: 13px; }
+
+.row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+.label { font-size: 11px; color: var(--muted); width: 36px; }
+.form { display: flex; gap: 3px; }
+.res { width: 18px; height: 18px; border-radius: 4px; font-size: 11px; font-weight: 700; display: grid; place-items: center; }
+.res-W { background: #1f4d35; color: #7be3a8; }
+.res-L { background: #4d1f1f; color: #ff9a8f; }
+.civs { display: flex; flex-wrap: wrap; gap: 6px; }
+.civ-chip { display: inline-flex; align-items: center; gap: 3px; font-size: 12px; color: var(--muted); }
+.civ-chip img { width: 20px; height: 20px; border-radius: 4px; }
+
+.loading { margin-top: 10px; color: var(--muted); animation: pulse 1.5s infinite; }
+.error { margin-top: 10px; color: var(--strong); }
+
+@media (max-width: 520px) {
+  .topbar { padding: 10px 16px; }
+  .teams, .plan { padding-left: 16px; padding-right: 16px; }
+  .teams { grid-template-columns: 1fr; }
+  .stats { grid-template-columns: repeat(2, 1fr); }
+}

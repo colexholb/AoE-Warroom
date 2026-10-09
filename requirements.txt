@@ -1,0 +1,6 @@
+fastapi>=0.115
+uvicorn[standard]>=0.30
+httpx>=0.27
+watchfiles>=0.24
+# Civ and map names. Bump this after a new DLC adds civs or maps.
+aocref>=2.0.42
