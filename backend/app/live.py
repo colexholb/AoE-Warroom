@@ -27,6 +27,10 @@ RECORD_SUFFIX = ".aoe2record"
 # Past games per player to pull strategy from, and how many recent matches to try for them.
 REPLAY_SAMPLE = 10
 REPLAY_CANDIDATES = 25
+# How often to check that AoE2 is still recording games (one small API call).
+RECORDING_CHECK_SECONDS = 5 * 60
+# An API game that started this long after the newest recording's last write wasn't recorded.
+UNRECORDED_GRACE = timedelta(minutes=2)
 
 
 def list_recordings(limit: int = 30) -> list[Path]:
@@ -34,10 +38,19 @@ def list_recordings(limit: int = 30) -> list[Path]:
     return sorted(files, key=lambda f: f.stat().st_mtime, reverse=True)[:limit]
 
 
+def recent_profile_ids(limit: int = 15) -> set[int]:
+    """Everyone in your recent recordings: the profile picker ranks these first."""
+    ids: set[int] = set()
+    for f in list_recordings(limit):
+        try:
+            ids.update(p.profile_id for p in parse_record(f).players if p.profile_id)
+        except Exception:
+            continue
+    return ids
+
+
 def detect_my_profile() -> int | None:
     """You are in every recording on this PC, so the most common profile id is you."""
-    if config.MY_PROFILE_ID:
-        return config.MY_PROFILE_ID
     counts: Counter[int] = Counter()
     files = list_recordings(15)
     for f in files:
@@ -56,6 +69,7 @@ class LiveService:
         self.client = client
         self.replays = replays
         self.me: int | None = None
+        self.me_source: str | None = None  # env | picked | detected
         self.state: dict = {"status": "waiting", "match": None, "players": [], "summary": None}
         self._subscribers: set[asyncio.Queue[str]] = set()
         self._analysis: asyncio.Task | None = None
@@ -64,14 +78,14 @@ class LiveService:
     # ---- lifecycle -------------------------------------------------------------------------
 
     async def start(self) -> None:
-        self.me = await asyncio.to_thread(detect_my_profile)
+        await self._resolve_me()
         dirs = config.savegame_dirs()
         self.state["watching"] = [str(d) for d in dirs]
-        self.state["me"] = self.me
-        log.info("watching %s as profile %s", dirs, self.me)
+        log.info("watching %s as profile %s (%s)", dirs, self.me, self.me_source)
         recent = list_recordings(1)
         if recent:
             await self.load(recent[0], live=self.is_fresh(recent[0]))
+        self._tasks.append(asyncio.create_task(self._check_recording()))
         if dirs:
             self._tasks.append(asyncio.create_task(self._watch(dirs)))
             self._tasks.append(asyncio.create_task(self._index_local()))
@@ -81,6 +95,45 @@ class LiveService:
         for task in [*self._tasks, self._analysis]:
             if task:
                 task.cancel()
+
+    # ---- who you are ----------------------------------------------------------------------
+
+    async def _resolve_me(self) -> None:
+        """AOE_PROFILE_ID, else the profile picked in the UI, else a guess from recordings."""
+        picked = config.load_settings().get("profile_id")
+        if config.MY_PROFILE_ID:
+            self.me, self.me_source = config.MY_PROFILE_ID, "env"
+        elif picked:
+            self.me, self.me_source = int(picked), "picked"
+        else:
+            detected = await asyncio.to_thread(detect_my_profile)
+            self.me, self.me_source = detected, "detected" if detected else None
+        self.state["me"] = self.me
+        self.state["me_source"] = self.me_source
+        self.state["me_name"] = None
+        if self.me:
+            self._tasks.append(asyncio.create_task(self._fill_my_name()))
+
+    async def _fill_my_name(self) -> None:
+        try:
+            profile = await self.client.profile(self.me)
+        except Exception as e:  # noqa: BLE001 - the name is only cosmetic
+            log.debug("could not fetch my profile: %s", e)
+            return
+        self.state["me_name"] = profile.get("name")
+        self._publish()
+
+    async def set_me(self, profile_id: int | None) -> None:
+        """Remember the profile picked in the UI (None forgets it) and redo the current match
+        so teams and advice flip to the right side."""
+        config.save_settings(profile_id=profile_id)
+        await self._resolve_me()
+        match = self.state.get("match")
+        if match and Path(match["path"]).exists():
+            await self.load(Path(match["path"]), live=self.state["status"] == "live")
+        else:
+            self._publish()
+        self._tasks.append(asyncio.create_task(self._check_recording()))
 
     # ---- pub/sub ---------------------------------------------------------------------------
 
@@ -274,12 +327,42 @@ class LiveService:
                 continue
             log.info("new recording %s", newest.name)
             await self.load(newest, live=True)
+            await self._check_recording()
             # The previous game just ended, so it can join the local index.
             self._tasks.append(asyncio.create_task(self._index_local()))
 
+    async def _check_recording(self) -> None:
+        """Warn when AoE2 isn't recording games, since then no game ever shows up here:
+        no savegame folder, no recordings, or the API lists a game of yours that started after
+        your newest recording was last written."""
+        recordings = list_recordings(1)
+        warning = None
+        if not config.savegame_dirs():
+            warning = {"kind": "no_folder"}
+        elif not recordings:
+            warning = {"kind": "no_recordings"}
+        elif self.me:
+            try:
+                matches = await self.client.matches(self.me, count=5)
+            except Exception as e:  # noqa: BLE001 - keep the previous verdict on API trouble
+                log.debug("recording check failed: %s", e)
+                return
+            last_write = datetime.fromtimestamp(recordings[0].stat().st_mtime, timezone.utc)
+            latest = max((datetime.fromisoformat(m["started"].replace("Z", "+00:00"))
+                          for m in matches if m.get("started")), default=None)
+            if latest and latest - last_write > UNRECORDED_GRACE:
+                warning = {"kind": "not_recorded", "started": latest.isoformat()}
+        if warning != self.state.get("recording_warning"):
+            self.state["recording_warning"] = warning
+            self._publish()
+
     async def _liveness(self) -> None:
+        last_check = time.monotonic()
         while True:
             await asyncio.sleep(10)
+            if time.monotonic() - last_check > RECORDING_CHECK_SECONDS:
+                last_check = time.monotonic()
+                await self._check_recording()
             match = self.state.get("match")
             if self.state["status"] == "live" and match:
                 path = Path(match["path"])

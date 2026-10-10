@@ -14,15 +14,15 @@ from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from .aoe2companion import Aoe2CompanionClient
-from .live import LiveService, list_recordings
+from . import config
+from .aoe2companion import Aoe2CompanionClient, RateLimited
+from .live import LiveService, list_recordings, recent_profile_ids
 from .replay_store import ReplayService, ReplayStore
 from .record_header import parse_record
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
 STATIC_DIR = Path(__file__).parent / "static"
-ICON_CACHE = Path(__file__).parent.parent / "cache" / "civ-icons"
 ICON_CDN = "https://backend.cdn.aoe2companion.com/public/aoe2/de/civilizations"
 
 
@@ -115,18 +115,66 @@ async def load(req: LoadRequest) -> dict:
     return {"ok": True}
 
 
+@app.get("/api/profiles/search")
+async def search_profiles(q: str) -> list[dict]:
+    """Find your own profile by name, profile id or aoe2companion profile link. Profiles from
+    your recent recordings come first, since that's almost certainly you among same-name players."""
+    service: LiveService = app.state.live
+    q = q.strip()
+    id_match = re.fullmatch(r"(?:.*/profile/)?(\d{3,})/?", q)
+    found: list[dict] = []
+    try:
+        if id_match:
+            try:
+                found.append(await service.client.profile(int(id_match.group(1))))
+            except httpx.HTTPStatusError as e:
+                if e.response.status_code not in (400, 404):  # 400/404: no such profile id
+                    raise
+        if len(q) >= 2 and "/" not in q:  # digits can be a name too ("805678789")
+            ids = {p.get("profileId") for p in found}
+            found += [p for p in await service.client.search_profiles(q) if p.get("profileId") not in ids]
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(502, f"aoe2companion answered {e.response.status_code}")
+    except RateLimited as e:
+        raise HTTPException(429, str(e))
+    mine = await asyncio.to_thread(recent_profile_ids)
+    results = [{
+        "profile_id": p["profileId"],
+        "name": p.get("name"),
+        "country": p.get("country"),
+        "clan": p.get("clan") or None,
+        "games": int(p.get("games") or 0),
+        "platform": p.get("platformName") or p.get("platform"),
+        "avatar": (f"https://avatars.steamstatic.com/{p['avatarhash']}_medium.jpg"
+                   if p.get("avatarhash") and p.get("platform") == "steam" else None),
+        "in_recordings": p["profileId"] in mine,
+    } for p in found if p.get("profileId")]
+    return sorted(results, key=lambda r: not r["in_recordings"])  # stable: API order otherwise
+
+
+class MeRequest(BaseModel):
+    profile_id: int | None  # None forgets the pick and falls back to auto-detection
+
+
+@app.post("/api/me")
+async def set_me(req: MeRequest) -> dict:
+    await app.state.live.set_me(req.profile_id)
+    return {"ok": True}
+
+
 @app.get("/civ-icons/{slug}.png")
 async def civ_icon(slug: str) -> FileResponse:
     """Civ icons from aoe2companion's CDN, downloaded once and kept on disk."""
     if not re.fullmatch(r"[a-z]+", slug):
         raise HTTPException(404)
-    path = ICON_CACHE / f"{slug}.png"
+    icons = config.cache_dir() / "civ-icons"
+    path = icons / f"{slug}.png"
     if not path.exists():
         async with httpx.AsyncClient(timeout=15) as http:
             resp = await http.get(f"{ICON_CDN}/{slug}.png")
         if resp.status_code != 200:
             raise HTTPException(404)
-        ICON_CACHE.mkdir(parents=True, exist_ok=True)
+        icons.mkdir(exist_ok=True)
         path.write_bytes(resp.content)
     return FileResponse(path, headers={"Cache-Control": "max-age=604800"})
 

@@ -240,3 +240,58 @@ a:hover { text-decoration: underline; }
   .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .summary-tags { grid-template-columns: 1fr; }
 }
+
+.banner {
+  margin: 12px 16px 0;
+  padding: 10px 14px;
+  border: 1px solid var(--gold);
+  border-radius: 6px;
+  background: var(--panel-2);
+}
+.banner b { color: var(--gold); }
+.footer {
+  margin: 32px auto 16px;
+  padding: 0 16px;
+  max-width: 760px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--muted);
+}
+.footer a { color: var(--muted); }
+
+.me-btn b { color: var(--gold); }
+.picker-panel {
+  margin: 12px 16px 0;
+  padding: 14px 16px;
+  background: var(--panel);
+  border: 1px solid var(--gold);
+  border-radius: 8px;
+}
+.picker-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.picker-head h2 { margin: 0; font-size: 18px; color: var(--gold); }
+.picker-input {
+  width: 100%; max-width: 420px; box-sizing: border-box;
+  background: var(--panel-2); color: var(--text); border: 1px solid var(--border);
+  border-radius: 6px; padding: 8px 10px; font: inherit;
+}
+.picker-input:focus { outline: none; border-color: var(--gold); }
+.picker-results {
+  list-style: none; margin: 10px 0 0; padding: 0 4px 0 0; display: grid; gap: 6px; max-width: 620px;
+  max-height: 360px; overflow-y: auto;
+}
+.picker-row {
+  display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+  background: var(--panel-2); color: var(--text); border: 1px solid var(--border);
+  border-radius: 6px; padding: 6px 10px; font: inherit; cursor: pointer;
+}
+.picker-row:hover, .picker-row.current { border-color: var(--gold); }
+.picker-row img, .avatar-blank { width: 32px; height: 32px; border-radius: 4px; flex: none; background: var(--border); }
+.picker-who { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.badge {
+  flex: none; font-size: 11px; padding: 2px 6px; border-radius: 4px;
+  border: 1px solid var(--weak); color: var(--weak);
+}
+.link {
+  margin-top: 10px; background: none; border: none; padding: 0;
+  color: var(--muted); font: inherit; font-size: 12px; text-decoration: underline; cursor: pointer;
+}

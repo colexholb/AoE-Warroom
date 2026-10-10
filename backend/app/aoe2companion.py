@@ -15,6 +15,7 @@ from . import config
 log = logging.getLogger(__name__)
 
 PROFILE_TTL = 5 * 60
+SEARCH_TTL = 5 * 60
 HISTORY_TTL = 5 * 60
 # The API allows 16 requests per 10 seconds (X-RateLimit-* headers); stay a little under.
 RATE_LIMIT = 14
@@ -75,6 +76,11 @@ class Aoe2CompanionClient:
 
     async def profile(self, profile_id: int) -> dict:
         return await self._get(f"profile:{profile_id}", PROFILE_TTL, f"/profiles/{profile_id}")
+
+    async def search_profiles(self, query: str) -> list[dict]:
+        """Name search; aoe2companion returns up to 20, most games first."""
+        data = await self._get(f"search:{query.lower()}", SEARCH_TTL, "/profiles", {"search": query})
+        return data.get("profiles", [])
 
     async def matches(self, profile_id: int, count: int = config.HISTORY_SIZE) -> list[dict]:
         data = await self._get(

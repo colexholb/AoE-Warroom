@@ -20,7 +20,6 @@ from .replay import analyze_recording, strategy_dict
 
 log = logging.getLogger(__name__)
 
-DB_PATH = Path(__file__).parent.parent / "cache" / "warroom.db"
 REPLAY_URL = "https://aoe.ms/replay/"
 # Retry replays that weren't available after this long (uploads can lag behind the match).
 MISSING_RETRY_SECONDS = 6 * 3600
@@ -50,8 +49,7 @@ CREATE INDEX IF NOT EXISTS player_games_started ON player_games (profile_id, sta
 
 class ReplayStore:
     def __init__(self) -> None:
-        DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-        self._db = sqlite3.connect(DB_PATH, check_same_thread=False)
+        self._db = sqlite3.connect(config.cache_dir() / "warroom.db", check_same_thread=False)
         self._db.row_factory = sqlite3.Row
         self._db.executescript(SCHEMA)
         self._lock = threading.Lock()

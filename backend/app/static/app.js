@@ -31,6 +31,7 @@ function useLiveState() {
 function App() {
   const [state, connected] = useLiveState();
   const [open, setOpen] = useState({});
+  const [picking, setPicking] = useState(false);
   const matchFile = state?.match?.file;
   useEffect(() => setOpen({}), [matchFile]); // new game: start collapsed
   if (!state) return html`<div class="empty">Connecting…</div>`;
@@ -39,7 +40,10 @@ function App() {
   const toggleAll = () => setOpen(allOpen ? {} : Object.fromEntries(players.map((p) => [p.number, true])));
   const toggle = (n) => setOpen((o) => ({ ...o, [n]: !o[n] }));
   return html`
-    <${TopBar} state=${state} connected=${connected} />
+    <${TopBar} state=${state} connected=${connected} onPickMe=${() => setPicking(true)} />
+    <${RecordingWarning} warning=${state.recording_warning} />
+    ${(picking || !state.me) && html`
+      <${ProfilePicker} state=${state} onDone=${() => setPicking(false)} closable=${!!state.me} />`}
     ${!match
       ? html`<${Waiting} state=${state} />`
       : html`
@@ -48,10 +52,106 @@ function App() {
           <button class="btn" onClick=${toggleAll}>${allOpen ? "Collapse all" : "Expand all"}</button>
         </div>
         <${Teams} players=${players} match=${match} open=${open} toggle=${toggle} />`}
+    <${Footer} />
   `;
 }
 
-function TopBar({ state, connected }) {
+// Without recordings no game ever shows up, so say so loudly.
+function RecordingWarning({ warning }) {
+  if (!warning) return null;
+  const turnOn = html`Turn on <b>Record game</b> in AoE2's game settings, or Warroom can't see your games.`;
+  const text = {
+    no_folder: html`Couldn't find the AoE2 savegame folder (${String.raw`%USERPROFILE%\Games\Age of Empires 2 DE`}). Is the game installed on this PC?`,
+    no_recordings: html`No recorded games found yet. ${turnOn}`,
+    not_recorded: html`Your last game${warning.started
+      ? ` (${new Date(warning.started).toLocaleString([], { dateStyle: "short", timeStyle: "short" })})` : ""} wasn't recorded. ${turnOn}`,
+  }[warning.kind];
+  return text ? html`<div class="banner" role="alert">⚠️ ${text}</div>` : null;
+}
+
+// Who "you" are decides which team is the enemy, so a wrong or missing pick flips everything.
+function ProfilePicker({ state, onDone, closable }) {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState(null); // null = nothing searched yet
+  const [error, setError] = useState(null);
+  const [saving, setSaving] = useState(false);
+  useEffect(() => {
+    const q = query.trim();
+    if (q.length < 2) { setResults(null); setError(null); return; }
+    const timer = setTimeout(async () => {
+      try {
+        const r = await fetch(`/api/profiles/search?q=${encodeURIComponent(q)}`);
+        if (!r.ok) throw new Error((await r.json()).detail || `Search failed (${r.status})`);
+        setResults(await r.json());
+        setError(null);
+      } catch (e) {
+        setError(e.message);
+      }
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [query]);
+  const pick = async (profileId) => {
+    setSaving(true);
+    await fetch("/api/me", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ profile_id: profileId }),
+    });
+    setSaving(false);
+    onDone();
+  };
+  return html`
+    <section class="picker-panel">
+      <div class="picker-head">
+        <h2>${state.me ? "Change who you are" : "Who are you?"}</h2>
+        ${closable && html`<button class="btn" onClick=${onDone}>Close</button>`}
+      </div>
+      <p class="muted">
+        Warroom needs your AoE2 profile to tell your team from the enemy.
+        Search your in-game name, or paste your aoe2companion profile link.
+      </p>
+      <input class="picker-input" type="search" placeholder="Your in-game name" autofocus
+             value=${query} onInput=${(e) => setQuery(e.target.value)} disabled=${saving} />
+      ${error && html`<div class="error">${error}</div>`}
+      ${results && results.length === 0 && html`<div class="muted small">No players found.</div>`}
+      ${results && results.length > 0 && html`
+        <ul class="picker-results">
+          ${results.map((r) => html`
+            <li>
+              <button class=${`picker-row${r.profile_id === state.me ? " current" : ""}`}
+                      onClick=${() => pick(r.profile_id)} disabled=${saving}>
+                ${r.avatar ? html`<img src=${r.avatar} alt="" />` : html`<span class="avatar-blank"></span>`}
+                <span class="picker-who">
+                  <span><b>${r.name}</b>${r.clan && html` <span class="muted">[${r.clan}]</span>`}</span>
+                  <span class="muted small">
+                    ${[r.country?.toUpperCase(), `${r.games.toLocaleString()} games`, r.platform, `id ${r.profile_id}`]
+                      .filter(Boolean).join(" · ")}
+                  </span>
+                </span>
+                ${r.in_recordings && html`<span class="badge">In your recordings</span>`}
+                ${r.profile_id === state.me && html`<span class="badge">Current</span>`}
+              </button>
+            </li>`)}
+        </ul>`}
+      ${state.me_source === "picked" && html`
+        <button class="link" onClick=${() => pick(null)} disabled=${saving}>
+          Forget my pick and auto-detect from recordings
+        </button>`}
+    </section>
+  `;
+}
+
+function Footer() {
+  return html`
+    <footer class="footer">
+      Age of Empires II © Microsoft Corporation. AoE Warroom was created under Microsoft's
+      "<a href="https://www.xbox.com/en-US/developers/rules" target="_blank" rel="noreferrer">Game Content Usage Rules</a>"
+      using assets from Age of Empires II, and it is not endorsed by or affiliated with Microsoft.
+    </footer>
+  `;
+}
+
+function TopBar({ state, connected, onPickMe }) {
   const { match, status } = state;
   const label = { live: "Live", finished: "Last game", waiting: "Waiting for a game" }[status];
   return html`
@@ -65,6 +165,10 @@ function TopBar({ state, connected }) {
         </span>`}
       <div class="spacer"></div>
       ${!connected && html`<span class="status status-offline">Reconnecting…</span>`}
+      <button class="btn me-btn" onClick=${onPickMe}
+              title=${state.me_source === "detected" ? "Guessed from your recordings. Click to change" : "Click to change"}>
+        ${state.me ? html`You: <b>${state.me_name ?? `#${state.me}`}</b>` : "Set your profile"}
+      </button>
       <${RecordingPicker} current=${match?.file} />
     </header>
   `;
