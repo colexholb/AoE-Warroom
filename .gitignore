@@ -2,3 +2,4 @@
 __pycache__/
 *.pyc
 backend/cache/
+scripts/probe_live_api*

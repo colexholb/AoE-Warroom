@@ -72,3 +72,9 @@ after it is used.
    aoestats.io stopped updating in Feb 2026 and aoe2insights' stats API is off-limits to bots
    (`robots.txt`), so the plan is to sample ~100 players near your rating from the aoe2companion
    RM Team leaderboard weekly and compute it ourselves. Openings come after replay parsing.
+
+## Legal
+
+Age of Empires II © Microsoft Corporation. AoE Warroom was created under Microsoft's
+"[Game Content Usage Rules](https://www.xbox.com/en-US/developers/rules)" using assets from
+Age of Empires II, and it is not endorsed by or affiliated with Microsoft.
