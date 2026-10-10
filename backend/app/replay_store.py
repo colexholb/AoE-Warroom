@@ -25,7 +25,7 @@ REPLAY_URL = "https://aoe.ms/replay/"
 # Retry replays that weren't available after this long (uploads can lag behind the match).
 MISSING_RETRY_SECONDS = 6 * 3600
 # Bump when replay.py's output changes so old cached rows get re-analyzed.
-ANALYZER_VERSION = 2
+ANALYZER_VERSION = 3
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS games (

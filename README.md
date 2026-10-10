@@ -34,7 +34,18 @@ Requires **Record game** to be on in AoE2 settings.
   finished recordings are indexed too, which covers lobby games the API doesn't list.
 - `backend/app/playstyle.py` turns up to 10 analyzed games per player into tendencies ("Opens FC in
   7/10 games", "Big boomer", "Usually plays pocket", "Weak on flank: 1-4") with counter advice for
-  enemies.
+  enemies. Collapsed cards show at-a-glance stats (Rush potential = Feudal military units, TCs by
+  25 min, castles by 25 min, army mix + what to build, premade) plus Danger / Exploit tiles
+  listing the red and green tags. The verdicts below are in the expanded card:
+  - **Boom or rush**: TCs by minute 25 and military made in Feudal Age → Boomer / Mixed / Rusher.
+  - **Castle Age**: what they do in the 5 minutes after reaching Castle Age (2+ new TCs or 3+ TCs by
+    25 = boom, 10+ military = army), castles placed by minute 25, and whether a castle went down
+    closer to an enemy base than their own (forward castle) or they made 8+ unique units (UU rush).
+  - **Army**: their Castle Age unit mix (share of ranged / cavalry / infantry / siege / monks) and
+    what to build against it ("Build: Skirmishers + Mangonels"; "Weak to: …" on your own team),
+    from the hand-curated table in `backend/app/counters.py`. Unique units only count from past
+    games on the civ they're playing now.
+  - **Comms**: anyone in the lobby who was their teammate in 2+ of their last 10 games.
 
 **Fair play:** only past games are analyzed. The recording of the game in progress is never read
 past its header (the lobby info you see on the loading screen anyway), and nothing that started

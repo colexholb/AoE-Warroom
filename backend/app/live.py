@@ -126,7 +126,7 @@ class LiveService:
             side = "me" if is_me else (
                 "ally" if my_team is not None and p.team == my_team else "enemy")
             players.append({**p.__dict__, "is_me": is_me, "side": side, "analysis": None,
-                            "loading": p.profile_id is not None, "playstyle": None})
+                            "loading": p.profile_id is not None, "playstyle": None, "comms": None})
 
         self.state.update({
             "status": "live" if live else "finished",
@@ -183,6 +183,7 @@ class LiveService:
         # Enemies first: they're what you want to see in the first seconds of a game.
         order = sorted((p for p in players if p["profile_id"]), key=lambda p: p["side"] != "enemy")
         await asyncio.gather(*(one(p) for p in order))
+        _detect_comms(players, history, record.started)
         self.state["summary"] = team_summary(players, my_team)
         self._publish()
 
@@ -285,6 +286,36 @@ class LiveService:
                 if not path.exists() or not self.is_fresh(path):
                     self.state["status"] = "finished"
                     self._publish()
+
+
+COMMS_SAMPLE = 10
+COMMS_MIN_GAMES = 2
+
+
+def _detect_comms(players: list[dict], history: dict[int, list[dict]], started: datetime | None) -> None:
+    """Players in this lobby who were on the same team in 2+ of someone's last 10 games:
+    likely a premade on voice comms."""
+    cutoff = (started or datetime.now(timezone.utc)) - timedelta(minutes=2)
+    in_lobby = {p["profile_id"]: p for p in players if p["profile_id"]}
+    for p in players:
+        matches = history.get(p["profile_id"])
+        if matches is None:
+            continue
+        recent = [m for m in matches if m.get("started")
+                  and datetime.fromisoformat(m["started"].replace("Z", "+00:00")) < cutoff][:COMMS_SAMPLE]
+        together: Counter[int] = Counter()
+        for m in recent:
+            team_of = {pl.get("profileId"): t["teamId"] for t in m.get("teams", []) for pl in t["players"]}
+            mine = team_of.get(p["profile_id"])
+            for pid in in_lobby:
+                if pid != p["profile_id"] and pid in team_of and team_of[pid] == mine:
+                    together[pid] += 1
+        p["comms"] = {
+            "sample": len(recent),
+            "with": [{"number": in_lobby[pid]["number"], "name": in_lobby[pid]["name"], "games": n,
+                      "same_team_now": p["team"] is not None and in_lobby[pid]["team"] == p["team"]}
+                     for pid, n in together.most_common() if n >= COMMS_MIN_GAMES],
+        }
 
 
 def _is_team_game(record: RecordInfo) -> bool:

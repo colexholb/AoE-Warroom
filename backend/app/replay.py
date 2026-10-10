@@ -1,4 +1,4 @@
-"""Extract each player's opening, age-up times, boom size and map position from a recording.
+"""Extract each player's opening, age-ups, boom, army, castle plan and map position from a recording.
 
 Only ever run on finished, past games. Reading the action stream of the game you're
 currently playing would reveal what opponents are doing right now, which is cheating.
@@ -27,6 +27,9 @@ AGE_RESEARCH_SECONDS = {FEUDAL: 130, CASTLE: 160, IMPERIAL: 190}
 
 TOWN_CENTERS = {109, 71, 141, 142, 621}
 TOWERS = {79}
+CASTLE_NAMES = {"Castle", "Krepost", "Donjon"}
+# After reaching Castle Age, this long decides whether they boomed or built an army.
+CASTLE_PLAN_WINDOW = 5 * 60
 # Buildings placed near your own base early on (walls, towers and forward buildings are skipped).
 HOME_BUILDINGS = {70, 562, 584, 68, 50}
 
@@ -49,6 +52,51 @@ CATEGORY_LABEL = {
 NAME_CATEGORY = [("Militia", "maa"), ("Man-at-Arms", "maa"), ("Spear", "spears"), ("Pike", "spears"),
                  ("Skirm", "skirms"), ("Scout", "scouts"), ("Archer", "archers"), ("Knight", "knights")]
 NOT_ARMY = ("Villager", "Fishing", "Trade", "Transport", "Cart", "King", "Cog")
+
+
+def _names(text: str) -> list[str]:
+    return [n.strip() for n in text.split(",") if n.strip()]
+
+
+# Army groups for "what do they build". Queue actions name the base unit of each line
+# (Knight covers Cavalier/Paladin), so base and unique unit names are enough.
+UNIT_GROUPS = {
+    "ranged": _names("""Archer, Skirmisher, Hand Cannoneer, Cavalry Archer, Slinger, Genitour, Elephant Archer,
+        Mangudai, Longbowman, Janissary, Genoese Crossbowman, Hussite Wagon, Chu Ko Nu, Conquistador,
+        Camel Archer, Rattan Archer, Mounted Crossbowman, Gbeto, War Wagon, Bolas Rider, Composite Bowman,
+        Throwing Axeman, Chakram Thrower, Grenadier, Plumed Archer, Blackwood Archer, Ratha, Fire Archer,
+        Kipchak, Xianbei Raider, War Chariot, Arambai"""),
+    "cavalry": _names("""Scout Cavalry, Knight, Camel Rider, Camel Scout, Battle Elephant, War Elephant, Steppe Lancer,
+        Magyar Huszar, Fire Lancer, Boyar, Tarkan, Monaspa, Mameluke, Cataphract, Leitis, Shrivamsha Rider,
+        Iron Pagoda, Konnik, Keshik, Tiger Cavalry, Centurion, Coustillier, Jarl, Cao Cao, Winged Hussar,
+        Savar, Lancer"""),
+    "infantry": _names("""Militia, Flemish Militia, Spearman, Eagle Scout, Champi Scout, Huskarl, Varangian Guard,
+        Jomsviking, Samurai, Condottiero, Kamayuk, Woad Raider, Shotel Warrior, Teutonic Knight, Obuch,
+        Berserk, Jaguar Warrior, Karambit Warrior, Ghulam, Serjeant, Urumi Swordsman, Temple Guard,
+        Hearth Troop, White Feather Guard, Liao Dao, Guecha Warrior, Kona, Dismounted Konnik, Legionary,
+        Jian Swordsman"""),
+    "siege": _names("""Scorpion, Mangonel, Bombard Cannon, Battering Ram, Trebuchet, Organ Gun, Ballista Elephant,
+        Rocket Cart, Petard, Armored Elephant, Siege Elephant, Siege Tower, Traction Trebuchet,
+        Mounted Trebuchet"""),
+    "monk": _names("Monk, Missionary, Warrior Priest"),
+    "navy": _names("""Galley, Fire Galley, Demolition Raft, Cannon Galleon, Hulk, Longboat, Caravel,
+        Catapult Galleon, Lou Chuan, Dromon, Turtle Ship, Fire Ship, Demolition Ship"""),
+}
+UNIT_GROUP_BY_NAME = {name: group for group, names in UNIT_GROUPS.items() for name in names}
+# Units every civ (or a whole region) gets; anything else in an army group is a unique unit.
+GENERIC_UNITS = set(_names("""Archer, Skirmisher, Hand Cannoneer, Cavalry Archer, Slinger, Genitour,
+    Elephant Archer, Scout Cavalry, Knight, Camel Rider, Camel Scout, Battle Elephant, Steppe Lancer,
+    Fire Lancer, Militia, Flemish Militia, Spearman, Eagle Scout, Champi Scout, War Chariot"""))
+ARMY_GROUPS = ("ranged", "cavalry", "infantry")
+
+
+def unit_group(unit_id: int) -> str:
+    return UNIT_GROUP_BY_NAME.get(object_name(unit_id) or "", "other")
+
+
+def is_unique_unit(unit_id: int) -> bool:
+    name = object_name(unit_id) or ""
+    return UNIT_GROUP_BY_NAME.get(name) in ARMY_GROUPS and name not in GENERIC_UNITS
 
 
 def unit_category(unit_id: int) -> str | None:
@@ -80,6 +128,7 @@ class PlayerTimeline:
     units: list[tuple[int, str, int]] = field(default_factory=list)  # (time, category, amount)
     army: list[tuple[int, int, int]] = field(default_factory=list)  # (time, unit id, amount)
     home_builds: list[tuple[float, float]] = field(default_factory=list)
+    castles: list[tuple[float, float, int]] = field(default_factory=list)
 
 
 @dataclass
@@ -103,6 +152,15 @@ class PlayerStrategy:
     first_military_time: int | None
     position: str | None  # "pocket" / "flank" / None
     base: tuple[float, float] | None
+    feudal_army: int  # military units queued in Feudal Age
+    army_by_age: dict[str, dict[str, int]]  # age -> unit group -> units queued
+    castles_by_25: int
+    forward_castles: int  # castles placed closer to an enemy base than their own
+    tcs_after_castle: int  # TCs placed in the 5 minutes after reaching Castle Age
+    army_after_castle: int  # military units queued in that window
+    uu_by_25: int  # unique units queued by minute 25
+    castle_plan: str  # Boom / Army / Boom + army / Forward castle / UU rush / Slow eco / No Castle by 25
+    army_events: list[tuple[int, int, int]]  # raw (seconds, unit id, amount), kept for future metrics
 
 
 def _read_timelines(body: io.BytesIO, numbers: set[int]) -> tuple[dict[int, PlayerTimeline], int]:
@@ -136,6 +194,8 @@ def _read_timelines(body: io.BytesIO, numbers: set[int]) -> tuple[dict[int, Play
                 tl.tc_positions.append((x, y, now))
             if building in TOWERS:
                 tl.towers_before.append(now)
+            if object_name(building) in CASTLE_NAMES and now < BOOM_CHECK_SECONDS:
+                tl.castles.append((x, y, now))
             if building in HOME_BUILDINGS and now < 6 * 60 and len(tl.home_builds) < 12:
                 tl.home_builds.append((x, y))
         elif action is Action.DE_QUEUE:
@@ -209,6 +269,27 @@ def _classify(tl: PlayerTimeline, game_seconds: int) -> dict:
         if castle is not None and t >= castle - 60:
             after_castle[unit] += n
     main_army = [plural(object_name(u)) for u, n in after_castle.most_common(2) if n >= 5]
+
+    imperial = _age_reached(tl, IMPERIAL)
+    edges = [("dark", feudal), ("feudal", castle), ("castle", imperial)]
+
+    def age_of(t: int) -> str:
+        for age, end in edges:
+            if end is None or t < end:
+                return age
+        return "imperial"
+
+    army_by_age: dict[str, Counter[str]] = defaultdict(Counter)
+    for t, unit, n in tl.army:
+        army_by_age[age_of(t)][unit_group(unit)] += n
+    feudal_army = sum(n for g, n in army_by_age["feudal"].items() if g != "monk")
+
+    tcs_after = army_after = 0
+    if castle is not None:
+        lo, hi = castle - 10, castle + CASTLE_PLAN_WINDOW
+        tcs_after = _distinct_positions([(x, y) for x, y, t in tl.tc_positions if lo <= t < hi])
+        army_after = sum(n for t, unit, n in tl.army
+                         if lo <= t < hi and unit_group(unit) in (*ARMY_GROUPS, "siege", "monk"))
     return {
         "feudal": feudal,
         "castle": castle,
@@ -221,7 +302,39 @@ def _classify(tl: PlayerTimeline, game_seconds: int) -> dict:
         "first_military": object_name(military[0][1]) if military else None,
         "main_army": main_army,
         "first_military_time": military[0][0] if military else None,
+        "feudal_army": feudal_army,
+        "army_by_age": {age: dict(groups) for age, groups in army_by_age.items() if groups},
+        "castles_by_25": _distinct_positions([(x, y) for x, y, _ in tl.castles]),
+        "tcs_after_castle": tcs_after,
+        "army_after_castle": army_after,
+        "uu_by_25": sum(n for t, unit, n in tl.army if t < BOOM_CHECK_SECONDS and is_unique_unit(unit)),
+        "army_events": tl.army,
     }
+
+
+def _forward_castles(tl: PlayerTimeline, own: tuple[float, float] | None,
+                     enemies: list[tuple[float, float]]) -> int:
+    if own is None or not enemies:
+        return 0
+    return sum(1 for x, y, _ in tl.castles
+               if min(math.dist((x, y), e) for e in enemies) < math.dist((x, y), own))
+
+
+def castle_plan(s: dict) -> str:
+    """What they did with Castle Age: the answer to "boom or army after the FC?".
+
+    Works on a stored strategy dict, so thresholds can be tuned without re-analyzing replays."""
+    if s["castle"] is None or s["castle"] > BOOM_CHECK_SECONDS:
+        return "No Castle by 25"
+    if s.get("forward_castles"):
+        return "Forward castle"
+    if s.get("uu_by_25", 0) >= 8:
+        return "UU rush"
+    boom = s.get("tcs_after_castle", 0) >= 2 or s["tcs_by_25"] >= 3
+    army = s.get("army_after_castle", 0) >= 10
+    if boom and army:
+        return "Boom + army"
+    return "Boom" if boom else "Army" if army else "Slow eco"
 
 
 def _distinct_positions(points: list[tuple[float, float]], min_gap: float = 4.0) -> int:
@@ -274,10 +387,16 @@ def analyze_recording(raw: bytes) -> tuple[RecordInfo, list[PlayerStrategy], int
     positions = _positions(record, bases)
     out = []
     for p in record.players:
-        c = _classify(timelines[p.number], game_seconds)
+        tl = timelines[p.number]
+        c = _classify(tl, game_seconds)
+        enemies = [bases[q.number] for q in record.players
+                   if q.number != p.number and bases.get(q.number)
+                   and (p.team is None or q.team != p.team)]
+        forward = _forward_castles(tl, bases[p.number], enemies)
         out.append(PlayerStrategy(
             number=p.number, profile_id=p.profile_id, name=p.name, civ=p.civ, civ_slug=p.civ_slug,
-            team=p.team, position=positions.get(p.number), base=bases[p.number], **c,
+            team=p.team, position=positions.get(p.number), base=bases[p.number],
+            forward_castles=forward, castle_plan=castle_plan({**c, "forward_castles": forward}), **c,
         ))
     return record, out, game_seconds
 

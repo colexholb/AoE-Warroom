@@ -10,6 +10,10 @@ const PROFILE_URL = (id) => `https://www.aoe2companion.com/profile/${id}`;
 const pct = (rate) => (rate == null ? "–" : `${Math.round(rate * 100)}%`);
 const colorOf = (p) => PLAYER_COLORS[p.color_id] ?? "#777";
 const colorName = (p) => COLOR_NAMES[p.color_id] ?? "?";
+const GROUP_COLORS = {
+  ranged: "#5fa8ff", cavalry: "#e0a34a", infantry: "#e07070", siege: "#a08cff",
+  monk: "#e6d36b", navy: "#4ec9c0", other: "#8a8a8a",
+};
 
 function useLiveState() {
   const [state, setState] = useState(null);
@@ -26,15 +30,24 @@ function useLiveState() {
 
 function App() {
   const [state, connected] = useLiveState();
+  const [open, setOpen] = useState({});
+  const matchFile = state?.match?.file;
+  useEffect(() => setOpen({}), [matchFile]); // new game: start collapsed
   if (!state) return html`<div class="empty">Connecting…</div>`;
   const { match, players, summary } = state;
+  const allOpen = players.length > 0 && players.every((p) => open[p.number]);
+  const toggleAll = () => setOpen(allOpen ? {} : Object.fromEntries(players.map((p) => [p.number, true])));
+  const toggle = (n) => setOpen((o) => ({ ...o, [n]: !o[n] }));
   return html`
     <${TopBar} state=${state} connected=${connected} />
     ${!match
       ? html`<${Waiting} state=${state} />`
       : html`
         <${GamePlan} summary=${summary} players=${players} />
-        <${Teams} players=${players} match=${match} />`}
+        <div class="toolbar">
+          <button class="btn" onClick=${toggleAll}>${allOpen ? "Collapse all" : "Expand all"}</button>
+        </div>
+        <${Teams} players=${players} match=${match} open=${open} toggle=${toggle} />`}
   `;
 }
 
@@ -129,7 +142,7 @@ function PlanItem({ icon, title, player, reasons }) {
   `;
 }
 
-function Teams({ players, match }) {
+function Teams({ players, match, open, toggle }) {
   const enemies = players.filter((p) => p.side === "enemy");
   const mine = players.filter((p) => p.side !== "enemy");
   const enemyTeams = groupBy(enemies, (p) => p.team ?? "ffa");
@@ -138,11 +151,11 @@ function Teams({ players, match }) {
       ${Object.entries(enemyTeams).map(([team, ps]) => html`
         <section class="team enemy">
           <h2>${team === "ffa" ? "Opponents" : match.my_team == null ? `Team ${team}` : "Enemy team"}</h2>
-          ${ps.map((p) => html`<${PlayerCard} key=${p.number} player=${p} />`)}
+          ${ps.map((p) => html`<${PlayerCard} key=${p.number} player=${p} open=${!!open[p.number]} toggle=${toggle} />`)}
         </section>`)}
       <section class="team ally">
         <h2>${mine.length > 1 ? "Your team" : "You"}</h2>
-        ${mine.map((p) => html`<${PlayerCard} key=${p.number} player=${p} />`)}
+        ${mine.map((p) => html`<${PlayerCard} key=${p.number} player=${p} open=${!!open[p.number]} toggle=${toggle} />`)}
       </section>
     </main>
   `;
@@ -152,16 +165,16 @@ function groupBy(items, key) {
   return items.reduce((acc, item) => ((acc[key(item)] ??= []).push(item), acc), {});
 }
 
-function PlayerCard({ player: p }) {
+function PlayerCard({ player: p, open, toggle }) {
   const a = p.analysis;
   return html`
-    <article class="card side-${p.side}" style=${{ "--player": colorOf(p) }}>
-      <div class="card-head">
+    <article class=${`card side-${p.side}${open ? " open" : ""}`} style=${{ "--player": colorOf(p) }}>
+      <div class="card-head" onClick=${() => toggle(p.number)} title=${open ? "Collapse" : "Expand"}>
         <img class="civ-icon" src=${CIV_ICON(p.civ_slug)} alt="" onError=${(e) => (e.target.style.visibility = "hidden")} />
         <div class="who">
           <div class="name">
             ${p.profile_id
-              ? html`<a href=${PROFILE_URL(p.profile_id)} target="_blank" rel="noreferrer">${p.name}</a>`
+              ? html`<a href=${PROFILE_URL(p.profile_id)} target="_blank" rel="noreferrer" onClick=${(e) => e.stopPropagation()}>${p.name}</a>`
               : p.name}
             ${p.is_me && html`<span class="you">you</span>`}
           </div>
@@ -174,13 +187,131 @@ function PlayerCard({ player: p }) {
           <div class="rating" title=${`Max ${a.rating.max_rating ?? "?"}`}>
             <b>${a.rating.rating}</b><span>${a.rating.leaderboard}</span>
           </div>`}
+        <span class="chevron" aria-hidden="true">${open ? "▾" : "▸"}</span>
       </div>
-      ${p.is_ai ? html`<div class="muted small">AI player</div>`
-        : p.loading ? html`<div class="loading">Pulling match history…</div>`
-        : a?.error ? html`<div class="error">Couldn't load history: ${a.error}</div>`
-        : a && html`<${CardBody} a=${a} />`}
-      ${p.playstyle && html`<${Playstyle} s=${p.playstyle} />`}
+      ${p.is_ai ? html`<div class="muted small">AI player</div>` : html`<${Summary} p=${p} />`}
+      ${open && !p.is_ai && html`
+        <div class="details">
+          ${p.loading ? html`<div class="loading">Pulling match history…</div>`
+            : a?.error ? html`<div class="error">Couldn't load history: ${a.error}</div>`
+            : a && html`<${CardBody} a=${a} />`}
+          ${p.playstyle && html`<${Playstyle} s=${p.playstyle} />`}
+        </div>`}
     </article>
+  `;
+}
+
+// At-a-glance stats, visible without expanding the card. Verdicts live in the dropdown.
+function Summary({ p }) {
+  const s = p.playstyle;
+  const loading = !s || s.status === "loading";
+  const pending = loading
+    ? (s ? `Reading replays ${s.done}/${s.target}…` : "Waiting for history…")
+    : "No replays available";
+  const noReplays = !loading && !s.games;
+  return html`
+    <div class="summary">
+      ${loading || noReplays
+        ? ["Rush potential", "Boom or rush", "Castle Age", "Army"].map((title) => html`
+          <${Tile} title=${title} label="…" advice=${pending} pending=${loading} />`)
+        : html`
+          <${Tile} title="Rush potential" label=${`${s.avg_feudal_army ?? "–"} units`}
+                   advice="military in Feudal Age, average" />
+          <${Tile} title="Boom or rush" label=${`${s.avg_tcs_by_25 ?? "–"} TCs`}
+                   advice="by 25 min, average" />
+          <${Tile} title="Castle Age" label=${`${s.castle_plan.avg_castles_by_25} castles`}
+                   advice="by 25 min, average" />
+          <${Tile} title="Army" label=${s.army.label}>
+            <${GroupBar} groups=${s.army.groups} />
+            <span class="tile-advice">${s.army.detail}</span>
+            ${s.army.counter && html`
+              <span class=${`tile-counter${p.side === "enemy" ? " build" : ""}`}>
+                ${p.side === "enemy" ? "Build: " : "Weak to: "}<b>${s.army.counter}</b>
+              </span>`}
+          </${Tile}>`}
+      <${CommsTile} comms=${p.comms} />
+    </div>
+    <div class="summary-tags">
+      <${TagTile} p=${p} kind="strength" title=${p.side === "enemy" ? "Danger" : "Strengths"} />
+      <${TagTile} p=${p} kind="weakness" title=${p.side === "enemy" ? "Exploit" : "Weaknesses"} />
+    </div>
+  `;
+}
+
+// The red (strength) or green (weakness) tags from history and replays, in one place.
+const TAGS_SHOWN = 3;
+function TagTile({ p, kind, title }) {
+  const ready = p.analysis && !p.loading;
+  const tags = [...(p.analysis?.insights || []), ...(p.playstyle?.insights || [])].filter((i) => i.kind === kind);
+  return html`
+    <div class=${`tile tag-tile tag-tile-${kind}`}>
+      <span class="tile-title">${title}</span>
+      ${!ready ? html`<span class="tile-advice loading">Waiting for history…</span>`
+        : tags.length === 0 ? html`<span class="tile-advice muted">Nothing stands out</span>`
+        : html`
+          <ul>${tags.slice(0, TAGS_SHOWN).map((t) => html`<li>${t.text}</li>`)}</ul>
+          ${tags.length > TAGS_SHOWN && html`<span class="tile-detail">+${tags.length - TAGS_SHOWN} more in details</span>`}`}
+    </div>
+  `;
+}
+
+function Tile({ title, label, level, advice, detail, pending, children }) {
+  return html`
+    <div class=${`tile${level ? ` level-${level}` : ""}`} title=${detail || ""}>
+      <span class="tile-title">${title}</span>
+      <b class="tile-label">${label}</b>
+      ${children}
+      ${advice && html`<span class=${`tile-advice${pending ? " loading" : ""}`}>${advice}</span>`}
+      ${detail && html`<span class="tile-detail">${detail}</span>`}
+    </div>
+  `;
+}
+
+function CommsTile({ comms }) {
+  if (!comms) return html`<${Tile} title="Comms" label="…" advice="Waiting for history…" pending=${true} />`;
+  if (!comms.with.length) {
+    return html`<${Tile} title="Comms" label="Solo" level="safe"
+                         advice=${`No repeat teammates in their last ${comms.sample} games`} />`;
+  }
+  const mates = comms.with.filter((w) => w.same_team_now);
+  const label = mates.length ? `Premade of ${mates.length + 1}` : "Knows lobby";
+  return html`
+    <div class=${`tile level-${mates.length ? "warn" : "safe"}`}>
+      <span class="tile-title">Comms</span>
+      <b class="tile-label">${label}</b>
+      <span class="tile-advice">
+        ${comms.with.map((w, i) => html`${i > 0 && ", "}${w.name} (${w.games}/${comms.sample})${!w.same_team_now && " · other team now"}`)}
+      </span>
+      <span class="tile-detail">Teammates in 2+ of their last ${comms.sample} games</span>
+    </div>
+  `;
+}
+
+function GroupBar({ groups }) {
+  if (!groups?.length) return null;
+  return html`
+    <span class="group-bar" title=${groups.map((g) => `${g.label} ${pct(g.share)}`).join(" · ")}>
+      ${groups.map((g) => html`<span style=${{ width: `${g.share * 100}%`, background: GROUP_COLORS[g.group] }}></span>`)}
+    </span>
+  `;
+}
+
+function ArmyByAge({ byAge }) {
+  const ages = ["feudal", "castle", "imperial"].filter((age) => byAge[age]);
+  if (!ages.length) return null;
+  return html`
+    <div class="army-ages">
+      ${ages.map((age) => html`
+        <div class="army-age">
+          <span class="label">${age[0].toUpperCase() + age.slice(1)}</span>
+          <${GroupBar} groups=${byAge[age].groups} />
+          <span class="army-legend">
+            ${byAge[age].groups.map((g) => html`
+              <span><i style=${{ background: GROUP_COLORS[g.group] }}></i>${g.label} ${pct(g.share)}</span>`)}
+            <span class="muted">· ${byAge[age].units_per_game} units/game</span>
+          </span>
+        </div>`)}
+    </div>
   `;
 }
 
@@ -204,6 +335,12 @@ function Playstyle({ s }) {
   return html`
     <div class="playstyle">
       <div class="section-title">Playstyle <span class="muted">· last ${games(s.games)} with replays</span></div>
+      <div class="verdicts">
+        <${Tile} title="Boom or rush" label=${s.tempo.label} level=${s.tempo.level}
+                 advice=${s.tempo.advice} detail=${s.tempo.detail} />
+        <${Tile} title="Castle Age" label=${s.castle_plan.label} level=${s.castle_plan.level}
+                 advice=${s.castle_plan.advice} detail=${s.castle_plan.detail} />
+      </div>
       ${s.insights.length > 0 && html`
         <ul class="insights">
           ${s.insights.map((i) => html`<li class=${`tag tag-${i.kind}`}>${i.text}</li>`)}
@@ -224,13 +361,23 @@ function Playstyle({ s }) {
                    title=${`Pocket ${s.positions.pocket.wins}-${s.positions.pocket.decided - s.positions.pocket.wins}, `
                            + `flank ${s.positions.flank.wins}-${s.positions.flank.decided - s.positions.flank.wins}`} />`}
       </div>
-      ${s.armies.length > 0 && html`
+      ${s.army.units?.length > 0 && html`
         <div class="row">
           <span class="label">Army</span>
           <span class="chips">
-            ${s.armies.map((a) => html`<span class="chip">${a.unit} <b>${a.count}</b></span>`)}
+            ${s.army.units.map((u) => html`
+              <span class="chip" title=${`${u.per_game} per game · countered by ${u.counters.join(", ")}`}>
+                ${u.unit} <b>${pct(u.share)}</b> <span class="muted">→ ${u.counters.slice(0, 2).join(", ")}</span>
+              </span>`)}
           </span>
         </div>`}
+      <div class="row">
+        <span class="label">Castle</span>
+        <span class="chips">
+          ${s.castle_plan.breakdown.map((b) => html`<span class="chip">${b.label} <b>${b.count}/${s.games}</b></span>`)}
+        </span>
+      </div>
+      <${ArmyByAge} byAge=${s.army_by_age} />
     </div>
   `;
 }
