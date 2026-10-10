@@ -42,6 +42,16 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="AoE Warroom", lifespan=lifespan)
 
 
+@app.middleware("http")
+async def revalidate_page_files(request, call_next):
+    """Make browsers check for a newer app.js / styles.css on every load (a 304 when unchanged),
+    so UI updates show up after a plain refresh instead of hiding behind a cached copy."""
+    response = await call_next(request)
+    if "cache-control" not in response.headers:
+        response.headers["Cache-Control"] = "no-cache"
+    return response
+
+
 @app.get("/api/state")
 async def get_state() -> dict:
     return app.state.live.state
