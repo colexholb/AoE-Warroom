@@ -1,32 +1,8 @@
 import { html, render, useEffect, useState } from "./vendor/preact-htm.js";
+import { CIV_ICON, GROUP_COLORS, colorName, colorOf, pct, useLiveState } from "./common.js";
 
-// In-game player colors, indexed by the 0-based color id from the recording.
-const PLAYER_COLORS = ["#3d6bff", "#ff3b3b", "#2fd04a", "#ffd83a", "#2fd6d6", "#c25cff", "#a0a0a0", "#ff9a2e"];
-const COLOR_NAMES = ["Blue", "Red", "Green", "Yellow", "Cyan", "Purple", "Grey", "Orange"];
-const CIV_ICON = (slug) => `/civ-icons/${slug}.png`;
 const games = (n) => `${n} game${n === 1 ? "" : "s"}`;
 const PROFILE_URL = (id) => `https://www.aoe2companion.com/profile/${id}`;
-
-const pct = (rate) => (rate == null ? "–" : `${Math.round(rate * 100)}%`);
-const colorOf = (p) => PLAYER_COLORS[p.color_id] ?? "#777";
-const colorName = (p) => COLOR_NAMES[p.color_id] ?? "?";
-const GROUP_COLORS = {
-  ranged: "#5fa8ff", cavalry: "#e0a34a", infantry: "#e07070", siege: "#a08cff",
-  monk: "#e6d36b", navy: "#4ec9c0", other: "#8a8a8a",
-};
-
-function useLiveState() {
-  const [state, setState] = useState(null);
-  const [connected, setConnected] = useState(false);
-  useEffect(() => {
-    const source = new EventSource("/api/events");
-    source.onopen = () => setConnected(true);
-    source.onerror = () => setConnected(false); // EventSource reconnects on its own
-    source.onmessage = (e) => setState(JSON.parse(e.data));
-    return () => source.close();
-  }, []);
-  return [state, connected];
-}
 
 function App() {
   const [state, connected] = useLiveState();
@@ -165,6 +141,10 @@ function TopBar({ state, connected, onPickMe }) {
         </span>`}
       <div class="spacer"></div>
       ${!connected && html`<span class="status status-offline">Reconnecting…</span>`}
+      <a class="btn" href="/overlay?preview" target="_blank" rel="noreferrer"
+         title=${`OBS: add a Browser Source with URL ${location.origin}/overlay (transparent; shows the enemy team during live games)`}>
+        OBS overlay
+      </a>
       <button class="btn me-btn" onClick=${onPickMe}
               title=${state.me_source === "detected" ? "Guessed from your recordings. Click to change" : "Click to change"}>
         ${state.me ? html`You: <b>${state.me_name ?? `#${state.me}`}</b>` : "Set your profile"}

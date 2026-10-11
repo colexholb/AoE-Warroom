@@ -162,6 +162,12 @@ async def set_me(req: MeRequest) -> dict:
     return {"ok": True}
 
 
+@app.get("/overlay")
+async def overlay() -> FileResponse:
+    """OBS browser source: enemy scouting report on a transparent page."""
+    return FileResponse(STATIC_DIR / "overlay.html")
+
+
 @app.get("/civ-icons/{slug}.png")
 async def civ_icon(slug: str) -> FileResponse:
     """Civ icons from aoe2companion's CDN, downloaded once and kept on disk."""

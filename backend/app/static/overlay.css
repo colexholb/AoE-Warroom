@@ -1,0 +1,58 @@
+/* OBS browser source: transparent page, each block on its own dark panel. */
+:root {
+  --panel: rgba(18, 16, 13, 0.86);
+  --border: rgba(217, 164, 65, 0.35);
+  --text: #f3ece0;
+  --muted: #b3a896;
+  --gold: #d9a441;
+  --danger: #ff6b5b;
+  --safe: #4cc38a;
+}
+html, body { margin: 0; background: transparent; }
+body {
+  color: var(--text);
+  font: 600 16px/1.35 system-ui, "Segoe UI", sans-serif;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+.overlay {
+  zoom: var(--scale, 1);
+  width: 460px;
+  padding: 8px;
+  display: grid;
+  gap: 6px;
+}
+.head, .plan, .enemy {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 10px;
+}
+.head { display: flex; gap: 10px; align-items: baseline; font-size: 14px; color: var(--muted); }
+.brand { color: var(--gold); font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; }
+.preview { margin-left: auto; font-size: 12px; text-transform: uppercase; }
+.plan { display: grid; gap: 2px; }
+.plan-line { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.plan-label { color: var(--gold); text-transform: uppercase; font-size: 12px; letter-spacing: 0.6px; margin-right: 6px; }
+.muted { color: var(--muted); font-weight: 500; }
+.enemy { border-left: 5px solid var(--player); display: grid; gap: 3px; }
+.enemy-head { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.civ { width: 26px; height: 26px; flex: none; }
+.name { font-size: 18px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.enemy-head .muted { font-size: 13px; white-space: nowrap; }
+.spacer { flex: 1; }
+.rating { color: var(--gold); font-size: 17px; }
+.line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 15px; }
+.tag {
+  font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;
+  padding: 1px 6px; border-radius: 4px; border: 1px solid currentColor; white-space: nowrap; flex: none;
+}
+.tag.danger { color: var(--danger); }
+.tag.warn { color: var(--gold); }
+.tag.safe { color: var(--safe); }
+.numbers { gap: 14px; color: var(--muted); font-weight: 500; }
+.numbers b { color: var(--text); font-weight: 800; }
+.army { flex-wrap: nowrap; align-items: baseline; font-weight: 500; }
+.army .bar { flex: none; align-self: center; }
+.army b { font-weight: 700; }
+.bar { display: inline-flex; width: 70px; height: 8px; border-radius: 4px; overflow: hidden; background: #333; }
+.bar span { height: 100%; }
