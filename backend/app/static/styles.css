@@ -173,7 +173,7 @@ a:hover { text-decoration: underline; }
 @media (max-width: 520px) { .playstyle .stats { grid-template-columns: repeat(2, 1fr); } }
 
 /* ---- collapsible cards + summary tiles ---- */
-.toolbar { display: flex; justify-content: flex-end; padding: 12px 20px 0; }
+.toolbar { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px 0; }
 .btn {
   background: var(--panel-2); color: var(--text); border: 1px solid var(--border);
   border-radius: 6px; padding: 6px 12px; font: inherit; cursor: pointer;

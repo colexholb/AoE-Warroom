@@ -8,13 +8,19 @@ function App() {
   const [state, connected] = useLiveState();
   const [open, setOpen] = useState({});
   const [picking, setPicking] = useState(false);
+  const [hideMine, setHideMine] = useState(() => loadPref("hideMyTeam") === "1");
   const matchFile = state?.match?.file;
   useEffect(() => setOpen({}), [matchFile]); // new game: start collapsed
   if (!state) return html`<div class="empty">Connecting…</div>`;
   const { match, players, summary } = state;
-  const allOpen = players.length > 0 && players.every((p) => open[p.number]);
-  const toggleAll = () => setOpen(allOpen ? {} : Object.fromEntries(players.map((p) => [p.number, true])));
+  const visible = hideMine ? players.filter((p) => p.side === "enemy") : players;
+  const allOpen = visible.length > 0 && visible.every((p) => open[p.number]);
+  const toggleAll = () => setOpen(allOpen ? {} : Object.fromEntries(visible.map((p) => [p.number, true])));
   const toggle = (n) => setOpen((o) => ({ ...o, [n]: !o[n] }));
+  const toggleMine = () => {
+    savePref("hideMyTeam", hideMine ? "0" : "1");
+    setHideMine(!hideMine);
+  };
   return html`
     <${TopBar} state=${state} connected=${connected} onPickMe=${() => setPicking(true)} />
     <${RecordingWarning} warning=${state.recording_warning} />
@@ -25,11 +31,22 @@ function App() {
       : html`
         <${GamePlan} summary=${summary} players=${players} />
         <div class="toolbar">
+          <button class="btn" onClick=${toggleMine} aria-pressed=${hideMine}>
+            ${hideMine ? "Show my team" : "Hide my team"}
+          </button>
           <button class="btn" onClick=${toggleAll}>${allOpen ? "Collapse all" : "Expand all"}</button>
         </div>
-        <${Teams} players=${players} match=${match} open=${open} toggle=${toggle} />`}
+        <${Teams} players=${players} match=${match} open=${open} toggle=${toggle} hideMine=${hideMine} />`}
     <${Footer} />
   `;
+}
+
+// Per-browser UI preferences; storage can be blocked, so never let it break the page.
+function loadPref(key) {
+  try { return localStorage.getItem(key); } catch { return null; }
+}
+function savePref(key, value) {
+  try { localStorage.setItem(key, value); } catch {}
 }
 
 // Without recordings no game ever shows up, so say so loudly.
@@ -226,7 +243,7 @@ function PlanItem({ icon, title, player, reasons }) {
   `;
 }
 
-function Teams({ players, match, open, toggle }) {
+function Teams({ players, match, open, toggle, hideMine }) {
   const enemies = players.filter((p) => p.side === "enemy");
   const mine = players.filter((p) => p.side !== "enemy");
   const enemyTeams = groupBy(enemies, (p) => p.team ?? "ffa");
@@ -237,10 +254,11 @@ function Teams({ players, match, open, toggle }) {
           <h2>${team === "ffa" ? "Opponents" : match.my_team == null ? `Team ${team}` : "Enemy team"}</h2>
           ${ps.map((p) => html`<${PlayerCard} key=${p.number} player=${p} open=${!!open[p.number]} toggle=${toggle} />`)}
         </section>`)}
-      <section class="team ally">
-        <h2>${mine.length > 1 ? "Your team" : "You"}</h2>
-        ${mine.map((p) => html`<${PlayerCard} key=${p.number} player=${p} open=${!!open[p.number]} toggle=${toggle} />`)}
-      </section>
+      ${!hideMine && html`
+        <section class="team ally">
+          <h2>${mine.length > 1 ? "Your team" : "You"}</h2>
+          ${mine.map((p) => html`<${PlayerCard} key=${p.number} player=${p} open=${!!open[p.number]} toggle=${toggle} />`)}
+        </section>`}
     </main>
   `;
 }
