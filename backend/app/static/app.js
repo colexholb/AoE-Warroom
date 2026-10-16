@@ -248,7 +248,7 @@ function Teams({ players, match, open, toggle, hideMine }) {
   const mine = players.filter((p) => p.side !== "enemy");
   const enemyTeams = groupBy(enemies, (p) => p.team ?? "ffa");
   return html`
-    <main class="teams">
+    <main class=${`teams${hideMine ? " hide-mine" : ""}`}>
       ${Object.entries(enemyTeams).map(([team, ps]) => html`
         <section class="team enemy">
           <h2>${team === "ffa" ? "Opponents" : match.my_team == null ? `Team ${team}` : "Enemy team"}</h2>

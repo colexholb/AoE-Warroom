@@ -100,6 +100,12 @@ a:hover { text-decoration: underline; }
 }
 .team.enemy h2 { color: var(--strong); }
 .team.ally h2 { color: var(--weak); }
+.teams.hide-mine .team.enemy {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 12px;
+}
+.teams.hide-mine .team.enemy h2 { grid-column: 1 / -1; }
 
 .card {
   background: var(--panel);
