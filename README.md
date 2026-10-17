@@ -58,6 +58,30 @@ after it is used.
 - `backend/app/static/` is the UI: plain Preact + htm, no build step. Updates arrive over
   server-sent events (`/api/events`).
 
+## Tabs
+
+- **Scout** — the original live/last-match view. Above the player cards you'll see a match
+  briefing with the map write-up and a chip for each civilization (click to expand bonuses,
+  unique units/techs, ideal comp and watch-outs).
+- **Explore** — before queueing, pick playstyle tags, must-have units and technologies to get a
+  ranked list of recommended civilizations.
+- **Counter** — during a game, type an enemy unit (e.g. "Scorpion") and see concrete counters
+  filtered to what your team's civs can actually build or research.
+
+## Data
+
+Static AoE2:DE meta data lives in `backend/app/data/`:
+
+- `techtrees.json` — generated from SiegeEngineers/aoe2techtree (commit pinned in
+  `data/SOURCES.md`).
+- `civ_meta.json` — civilization bonuses, unique units/techs (from official game strings) plus
+  hand-curated playstyle tags, ideal compositions and watch-outs.
+- `maps.json` — hand-curated notes for the common map pool.
+- `counters.json` — generic and civ-specific counter answers; loaded by `backend/app/counters.py`.
+
+To refresh after a game patch, re-run `tools/fetch_techtree.py`, review the diff, and edit the
+hand-curated files. See `backend/app/data/SOURCES.md` for full attribution.
+
 ## Settings (environment variables)
 
 | Variable | Default | |
