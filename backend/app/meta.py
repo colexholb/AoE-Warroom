@@ -191,6 +191,8 @@ def explore(tags: list[str], units: list[str], techs: list[str]) -> list[dict]:
         civ_tags = set(meta.get("playstyle_tags", []))
         civ_focus = set(meta.get("unit_focus", []))
         score = len(tag_set & civ_tags) + len(tag_set & civ_focus) * 0.5
+        if tag_set and score == 0:
+            continue
         matched = sorted(tag_set & civ_tags)
         results.append({
             "slug": slug,

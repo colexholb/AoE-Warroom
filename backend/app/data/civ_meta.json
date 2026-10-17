@@ -86,13 +86,15 @@
       "unique unit",
       "boom",
       "aggressive",
-      "late game"
+      "late game",
+      "eagles"
     ],
     "unit_focus": [
       "infantry",
       "monk",
       "archer",
-      "siege"
+      "siege",
+      "eagle"
     ],
     "ideal_comp": "Jaguar Warrior; Champion; Siege Onager; Pikeman",
     "watch_out": "archers and Hand Cannoneers kite your infantry"
@@ -1085,12 +1087,14 @@
       "boom",
       "aggressive",
       "late game",
-      "rush"
+      "rush",
+      "eagles"
     ],
     "unit_focus": [
       "infantry",
       "archer",
-      "siege"
+      "siege",
+      "eagle"
     ],
     "ideal_comp": "Kamayuk; Heavy Scorpion; Halberdier",
     "watch_out": "archers and Hand Cannoneers kite your infantry"

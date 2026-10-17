@@ -624,8 +624,8 @@ function ExplorePage() {
 
   useEffect(() => {
     const params = new URLSearchParams();
-    if (tags.size) params.set("tags", [...tags].join(","));
-    if (focus.size) params.set("tags", [...focus].join(","));
+    const allTags = [...tags, ...focus];
+    if (allTags.length) params.set("tags", allTags.join(","));
     if (units.length) params.set("units", units.join(","));
     if (techs.length) params.set("techs", techs.join(","));
     fetch(`/api/meta/explore?${params}`)
