@@ -14,12 +14,16 @@ run.bat lan     # also reachable by friends on your network at http://<your-PC-I
 The first run creates `.venv` and installs dependencies. Windows may ask to allow Python through
 the firewall for `lan` mode; allow it on private networks.
 
-Requires **Record game** to be on in AoE2 settings.
+Turn on **Record game** in AoE2 settings: games then show up on the loading screen. Without it,
+Warroom still finds them through aoe2companion, about 10–35 seconds into the game.
 
 ## How it works
 
-- `backend/app/live.py` watches `%USERPROFILE%\Games\Age of Empires 2 DE\*\savegame` for new
-  `.aoe2record` files. The game creates one as soon as a match starts.
+- `backend/app/live.py` finds new games two ways, whichever is first:
+  - it watches `%USERPROFILE%\Games\Age of Empires 2 DE\*\savegame` for new `.aoe2record` files,
+    which the game creates as soon as a match starts;
+  - `backend/app/ongoing.py` listens on aoe2companion's live-match websocket, which announces your
+    games with their players, civs, colors and teams, and says when they end.
 - `backend/app/record_header.py` reads players, civs, colors, teams, map and start time straight
   from the recording header (own minimal reader; the `mgz` library breaks on current patches).
 - `backend/app/aoe2companion.py` pulls each player's profile and last 300 matches from the public
@@ -30,8 +34,9 @@ Requires **Record game** to be on in AoE2 settings.
   tower rush…), age-up times, Town Centers by minute 25, main Castle Age army, and pocket vs flank
   (from where their early houses and camps went up).
 - `backend/app/replay_store.py` downloads players' recent replays from the official replay server
-  (`aoe.ms/replay`), analyzes them and caches the results in `backend/cache/warroom.db`. Your own
-  finished recordings are indexed too, which covers lobby games the API doesn't list.
+  (`aoe.ms/replay`), analyzes them and caches the results in `%LOCALAPPDATA%\AoE Warroom\cache\warroom.db`. Your own
+  finished recordings are indexed too (not with `AOE_DETECT=api`), which covers lobby games the API
+  doesn't list.
 - `backend/app/playstyle.py` turns up to 10 analyzed games per player into tendencies ("Opens FC in
   7/10 games", "Big boomer", "Usually plays pocket", "Weak on flank: 1-4") with counter advice for
   enemies. Collapsed cards show at-a-glance stats (Rush potential = Feudal military units, TCs by
@@ -59,6 +64,7 @@ after it is used.
 |---|---|---|
 | `AOE_PROFILE_ID` | auto-detected | Your profile id (the player present in all your recordings) |
 | `AOE_SAVEGAME_DIR` | auto-detected | Folder to watch |
+| `AOE_DETECT` | both | How to find new games: `folder` (recordings), `api` (aoe2companion websocket only; reads no local recordings at all, like a hosted server) or `both` |
 | `AOE_HISTORY_SIZE` | 300 | Matches pulled per player (max 300) |
 | `AOE_LIVE_TIMEOUT` | 90 | Seconds without writes before a game counts as finished |
 

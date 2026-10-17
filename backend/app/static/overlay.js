@@ -21,7 +21,7 @@ function useHidden(match) {
     const elapsed = match.started ? (Date.now() - Date.parse(match.started)) / 1000 : 0;
     const timer = setTimeout(() => setHidden(true), Math.max(0, HIDE_AFTER - elapsed) * 1000);
     return () => clearTimeout(timer);
-  }, [match?.file]);
+  }, [match?.key]);
   return hidden;
 }
 

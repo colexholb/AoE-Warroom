@@ -24,7 +24,15 @@ LIVE_TIMEOUT_SECONDS = int(os.environ.get("AOE_LIVE_TIMEOUT", "90"))
 # Your profile id. When unset: the one picked in the UI, else auto-detected from recordings.
 MY_PROFILE_ID = int(os.environ["AOE_PROFILE_ID"]) if os.environ.get("AOE_PROFILE_ID") else None
 API_BASE = "https://data.aoe2companion.com/api"
-USER_AGENT = "AoeWarroom-local/0.1 (personal match scouting tool)"
+# aoe2companion asks for the project url in the user agent.
+USER_AGENT = "AoeWarroom/0.1 (+https://github.com/colexholb/AoE-Warroom)"
+# How new games are found: "folder" (new recording, first on the loading screen), "api"
+# (aoe2companion websocket, 10-35 s later, works without Record game) or "both" (whichever is first).
+DETECT = os.environ.get("AOE_DETECT", "both").lower()
+if DETECT not in ("folder", "api", "both"):
+    raise SystemExit(f"AOE_DETECT must be folder, api or both, not {DETECT!r}")
+# API mode runs like the hosted version: no savegame folder, no local recordings at all.
+USE_RECORDINGS = DETECT != "api"
 
 
 def cache_dir() -> Path:
@@ -60,7 +68,10 @@ def save_settings(**changes) -> None:
 
 
 def savegame_dirs() -> list[Path]:
-    """Every savegame folder (one per Steam / Xbox account that has played on this PC)."""
+    """Every savegame folder (one per Steam / Xbox account that has played on this PC).
+    None in API mode, so nothing reads recordings there."""
+    if not USE_RECORDINGS:
+        return []
     if os.environ.get("AOE_SAVEGAME_DIR"):
         return [Path(os.environ["AOE_SAVEGAME_DIR"])]
     if not GAME_DIR.is_dir():

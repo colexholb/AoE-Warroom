@@ -9,8 +9,8 @@ function App() {
   const [open, setOpen] = useState({});
   const [picking, setPicking] = useState(false);
   const [hideMine, setHideMine] = useState(() => loadPref("hideMyTeam") === "1");
-  const matchFile = state?.match?.file;
-  useEffect(() => setOpen({}), [matchFile]); // new game: start collapsed
+  const matchKey = state?.match?.key;
+  useEffect(() => setOpen({}), [matchKey]); // new game: start collapsed
   if (!state) return html`<div class="empty">Connecting…</div>`;
   const { match, players, summary } = state;
   const visible = hideMine ? players.filter((p) => p.side === "enemy") : players;
@@ -23,7 +23,7 @@ function App() {
   };
   return html`
     <${TopBar} state=${state} connected=${connected} onPickMe=${() => setPicking(true)} />
-    <${RecordingWarning} warning=${state.recording_warning} />
+    <${RecordingWarning} warning=${state.recording_warning} viaApi=${state.detect !== "folder"} />
     ${(picking || !state.me) && html`
       <${ProfilePicker} state=${state} onDone=${() => setPicking(false)} closable=${!!state.me} />`}
     ${!match
@@ -49,10 +49,12 @@ function savePref(key, value) {
   try { localStorage.setItem(key, value); } catch {}
 }
 
-// Without recordings no game ever shows up, so say so loudly.
-function RecordingWarning({ warning }) {
+// Without recordings games show up late (found through aoe2companion) or never, so say so loudly.
+function RecordingWarning({ warning, viaApi }) {
   if (!warning) return null;
-  const turnOn = html`Turn on <b>Record game</b> in AoE2's game settings, or Warroom can't see your games.`;
+  const turnOn = viaApi
+    ? html`Turn on <b>Record game</b> in AoE2's game settings: Warroom still finds games through aoe2companion, but recordings show them on the loading screen instead of ~30 s into the game.`
+    : html`Turn on <b>Record game</b> in AoE2's game settings, or Warroom can't see your games.`;
   const text = {
     no_folder: html`Couldn't find the AoE2 savegame folder (${String.raw`%USERPROFILE%\Games\Age of Empires 2 DE`}). Is the game installed on this PC?`,
     no_recordings: html`No recorded games found yet. ${turnOn}`,
@@ -126,7 +128,7 @@ function ProfilePicker({ state, onDone, closable }) {
               </button>
             </li>`)}
         </ul>`}
-      ${state.me_source === "picked" && html`
+      ${state.me_source === "picked" && state.detect !== "api" && html`
         <button class="link" onClick=${() => pick(null)} disabled=${saving}>
           Forget my pick and auto-detect from recordings
         </button>`}
@@ -156,6 +158,10 @@ function TopBar({ state, connected, onPickMe }) {
           <b>${match.format}</b> · ${match.map_name ?? "Unknown map"}
           ${match.started && html` · ${new Date(match.started).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}`}
         </span>`}
+      <span class="meta muted" title="How Warroom finds games (AOE_DETECT) and where this game came from">
+        ${{ api: "API only", folder: "Recordings only", both: "Recordings + API" }[state.detect] ?? state.detect}
+        ${match && ` · this game via ${match.source === "api" ? "aoe2companion" : "recording"}`}
+      </span>
       <div class="spacer"></div>
       ${!connected && html`<span class="status status-offline">Reconnecting…</span>`}
       <a class="btn" href="/overlay?preview" target="_blank" rel="noreferrer"
@@ -166,34 +172,43 @@ function TopBar({ state, connected, onPickMe }) {
               title=${state.me_source === "detected" ? "Guessed from your recordings. Click to change" : "Click to change"}>
         ${state.me ? html`You: <b>${state.me_name ?? `#${state.me}`}</b>` : "Set your profile"}
       </button>
-      <${RecordingPicker} current=${match?.file} />
+      <${RecordingPicker} current=${match?.key} />
     </header>
   `;
 }
 
+// Past games to review: recordings, or your API match history in API-only mode.
 function RecordingPicker({ current }) {
   const [recordings, setRecordings] = useState([]);
-  const refresh = () => fetch("/api/recordings").then((r) => r.json()).then(setRecordings);
-  const load = (file) =>
+  const refresh = () => fetch("/api/recordings").then((r) => (r.ok ? r.json() : [])).then(setRecordings);
+  const load = (key) =>
     fetch("/api/load", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ file: file || null }),
+      body: JSON.stringify({ key: key || null }),
     });
   return html`
     <select class="picker" onFocus=${refresh} onChange=${(e) => load(e.target.value)}
-            title="Review a past recording">
+            title="Review a past game">
       <option value="">Latest game</option>
       ${recordings.map((r) => html`
-        <option value=${r.file} selected=${r.file === current}>
-          ${r.started ? new Date(r.started).toLocaleString([], { dateStyle: "short", timeStyle: "short" }) : r.file}
-          ${" · "}${r.map_name ?? "?"} · ${r.players}p
+        <option value=${r.key} selected=${r.key === current}>
+          ${r.started ? new Date(r.started).toLocaleString([], { dateStyle: "short", timeStyle: "short" }) : r.key}
+          ${" · "}${r.map_name ?? "?"} · ${r.players}p${r.live ? " · live" : ""}
         </option>`)}
     </select>
   `;
 }
 
 function Waiting({ state }) {
+  if (state.detect === "api") {
+    return html`
+      <div class="empty">
+        <h2>Waiting for your next game</h2>
+        <p>A new game shows up here 10–35 seconds into the Dark Age.</p>
+      </div>
+    `;
+  }
   return html`
     <div class="empty">
       <h2>Waiting for your next game</h2>

@@ -134,7 +134,7 @@ class ReplayService:
         if self.store.is_fresh(row):
             return game_from_row(row) if row["status"] == "ok" else None
         started = datetime.fromisoformat(match["started"].replace("Z", "+00:00"))
-        local = await asyncio.to_thread(self.store.find_local, prefer_profile, started)
+        local = await asyncio.to_thread(self.store.find_local, prefer_profile, started) if config.USE_RECORDINGS else None
         if local:
             return game_from_row(local)
         # Several players' cards can ask for the same match at once; download it once.

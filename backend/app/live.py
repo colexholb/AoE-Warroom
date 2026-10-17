@@ -1,4 +1,5 @@
-"""Watches the savegame folder and keeps the current match + analysis up to date."""
+"""Finds new games (savegame folder and/or aoe2companion's websocket) and keeps the current
+match + analysis up to date."""
 
 from __future__ import annotations
 
@@ -16,6 +17,7 @@ from watchfiles import Change, awatch
 
 from . import config
 from .aoe2companion import Aoe2CompanionClient
+from .ongoing import ongoing_events, record_from_match
 from .playstyle import summarize
 from .record_header import RecordInfo, parse_record
 from .replay_store import ReplayService, game_from_row
@@ -31,6 +33,8 @@ REPLAY_CANDIDATES = 25
 RECORDING_CHECK_SECONDS = 5 * 60
 # An API game that started this long after the newest recording's last write wasn't recorded.
 UNRECORDED_GRACE = timedelta(minutes=2)
+# A recording and an API match starting this close together (with shared players) are one game.
+SAME_GAME_SECONDS = 180
 
 
 def list_recordings(limit: int = 30) -> list[Path]:
@@ -74,6 +78,12 @@ class LiveService:
         self._subscribers: set[asyncio.Queue[str]] = set()
         self._analysis: asyncio.Task | None = None
         self._tasks: list[asyncio.Task] = []
+        self._record: RecordInfo | None = None  # the loaded match, from a recording or the API
+        self._api_match: dict | None = None  # set when the loaded match came from the API
+        self._api_match_id: int | None = None  # its API id, also when the recording came first
+        self._api_ended = False  # the API said it's over: don't revive it on a late file write
+        self._api_task: asyncio.Task | None = None
+        self._seen_recordings: set[str] = set()  # recordings of games the API had already found
 
     # ---- lifecycle -------------------------------------------------------------------------
 
@@ -81,18 +91,30 @@ class LiveService:
         await self._resolve_me()
         dirs = config.savegame_dirs()
         self.state["watching"] = [str(d) for d in dirs]
-        log.info("watching %s as profile %s (%s)", dirs, self.me, self.me_source)
-        recent = list_recordings(1)
-        if recent:
-            await self.load(recent[0], live=self.is_fresh(recent[0]))
+        self.state["detect"] = config.DETECT
+        log.info("watching %s as profile %s (%s), detecting games by %s",
+                 dirs, self.me, self.me_source, config.DETECT)
+        if config.DETECT == "api":
+            # Last game from your API history (what a hosted version will do), then live games.
+            self._tasks.append(asyncio.create_task(self._start_api()))
+        else:
+            recent = list_recordings(1)
+            if recent:
+                await self.load(recent[0], live=self.is_fresh(recent[0]))
+            self._restart_api_watch()
         self._tasks.append(asyncio.create_task(self._check_recording()))
-        if dirs:
+        if dirs:  # none in API mode
             self._tasks.append(asyncio.create_task(self._watch(dirs)))
             self._tasks.append(asyncio.create_task(self._index_local()))
         self._tasks.append(asyncio.create_task(self._liveness()))
 
+    async def _start_api(self) -> None:
+        # Before the websocket, so its snapshot of a running game wins over the last finished one.
+        await self.load_last_api_game()
+        self._restart_api_watch()
+
     async def stop(self) -> None:
-        for task in [*self._tasks, self._analysis]:
+        for task in [*self._tasks, self._analysis, self._api_task]:
             if task:
                 task.cancel()
 
@@ -129,11 +151,17 @@ class LiveService:
         config.save_settings(profile_id=profile_id)
         await self._resolve_me()
         match = self.state.get("match")
-        if match and Path(match["path"]).exists():
-            await self.load(Path(match["path"]), live=self.state["status"] == "live")
+        live = self.state["status"] == "live"
+        if config.DETECT == "api" and not live:
+            await self.load_last_api_game()  # the new profile's last game, not the old one's
+        elif self._api_match is not None:
+            await self.load_api(self._api_match, live=live)
+        elif match and match["path"] and Path(match["path"]).exists():
+            await self.load(Path(match["path"]), live=live)
         else:
             self._publish()
         self._tasks.append(asyncio.create_task(self._check_recording()))
+        self._restart_api_watch()  # the websocket listens for one profile's games
 
     # ---- pub/sub ---------------------------------------------------------------------------
 
@@ -163,13 +191,42 @@ class LiveService:
     def is_fresh(path: Path) -> bool:
         return time.time() - path.stat().st_mtime < config.LIVE_TIMEOUT_SECONDS
 
-    async def load(self, path: Path, live: bool) -> None:
-        record = await self._parse_with_retry(path)
+    async def load(self, path: Path, live: bool, record: RecordInfo | None = None) -> None:
+        record = record or await self._parse_with_retry(path)
         if record is None:
             log.warning("could not read players from %s", path)
             return
+        self._show(record, live, api_match=None)
+
+    async def load_api(self, match: dict, live: bool = True) -> None:
+        """A match from aoe2companion (websocket or `/matches`): no recording needed."""
+        self._show(record_from_match(match), live, api_match=match)
+
+    async def recent_api_games(self, limit: int = 10) -> list[dict]:
+        """Your latest matches from the API, newest first. Same request (and cache entry) as your
+        own card's history, so this usually costs no extra call."""
+        if not self.me:
+            return []
+        return [m for m in await self.client.matches(self.me) if m.get("started")][:limit]
+
+    async def load_last_api_game(self) -> None:
+        """Show your last finished game; a running one arrives through the websocket."""
+        try:
+            matches = await self.recent_api_games()
+        except Exception as e:  # noqa: BLE001 - the page just waits for the next game
+            log.warning("could not fetch your last games: %s", e)
+            return
+        last = next((m for m in matches if m.get("finished")), None)
+        if last:
+            await self.load_api(last, live=False)
+
+    def _show(self, record: RecordInfo, live: bool, api_match: dict | None) -> None:
         if self._analysis:
             self._analysis.cancel()
+        self._record = record
+        self._api_match = api_match
+        self._api_match_id = api_match["matchId"] if api_match else None
+        self._api_ended = False
 
         me = next((p for p in record.players if p.profile_id == self.me), None)
         my_team = me.team if me else None
@@ -184,8 +241,12 @@ class LiveService:
         self.state.update({
             "status": "live" if live else "finished",
             "match": {
-                "file": Path(record.path).name,
-                "path": record.path,
+                # Identifies the match for the UI (e.g. to collapse cards when a new one starts).
+                "key": Path(record.path).name if record.path else f"api:{self._api_match_id}",
+                "source": "api" if api_match else "recording",
+                "match_id": self._api_match_id,
+                "file": Path(record.path).name if record.path else None,
+                "path": record.path or None,
                 "started": record.started.isoformat() if record.started else None,
                 "map_name": record.map_name,
                 "is_team_game": _is_team_game(record),
@@ -270,8 +331,9 @@ class LiveService:
                 queue.append((started(m), m, None))
         queue = queue[:REPLAY_CANDIDATES]
 
-        # Your own recordings cover lobby games the API never saw.
-        for row in await asyncio.to_thread(self.replays.store.local_games, pid):
+        # Your own recordings cover lobby games the API never saw (not in API mode, like hosting).
+        local_rows = await asyncio.to_thread(self.replays.store.local_games, pid) if config.USE_RECORDINGS else []
+        for row in local_rows:
             game = game_from_row(row)
             when = datetime.fromisoformat(game["started"]) if game["started"] else None
             if when is None or when >= cutoff or row["key"] == f"local:{current_file}":
@@ -321,12 +383,22 @@ class LiveService:
             newest = max(paths, key=lambda f: f.stat().st_mtime if f.exists() else 0)
             current = (self.state.get("match") or {}).get("path")
             if current and os.path.normcase(str(newest)) == os.path.normcase(current):
-                if self.state["status"] != "live":
+                if self.state["status"] != "live" and not self._api_ended:
                     self.state["status"] = "live"
                     self._publish()
                 continue
-            log.info("new recording %s", newest.name)
-            await self.load(newest, live=True)
+            if self._api_match is not None and newest.name in self._seen_recordings:
+                continue  # the recording of a game the API found first, still being written
+            record = await self._parse_with_retry(newest)
+            if record is None:
+                log.warning("could not read players from %s", newest)
+                continue
+            if self._api_match is not None and self._is_current_game(record):
+                log.info("%s is the game already loaded from the API", newest.name)
+                self._seen_recordings.add(newest.name)
+            else:
+                log.info("new recording %s", newest.name)
+                await self.load(newest, live=True, record=record)
             await self._check_recording()
             # The previous game just ended, so it can join the local index.
             self._tasks.append(asyncio.create_task(self._index_local()))
@@ -334,7 +406,9 @@ class LiveService:
     async def _check_recording(self) -> None:
         """Warn when AoE2 isn't recording games, since then no game ever shows up here:
         no savegame folder, no recordings, or the API lists a game of yours that started after
-        your newest recording was last written."""
+        your newest recording was last written. API mode needs no recordings: never warn."""
+        if not config.USE_RECORDINGS:
+            return
         recordings = list_recordings(1)
         warning = None
         if not config.savegame_dirs():
@@ -364,11 +438,74 @@ class LiveService:
                 last_check = time.monotonic()
                 await self._check_recording()
             match = self.state.get("match")
-            if self.state["status"] == "live" and match:
+            # API matches end on the websocket's matchRemoved instead.
+            if self.state["status"] == "live" and match and match["path"]:
                 path = Path(match["path"])
                 if not path.exists() or not self.is_fresh(path):
-                    self.state["status"] = "finished"
+                    self._finish()
+
+    def _finish(self) -> None:
+        self.state["status"] = "finished"
+        self._publish()
+
+    # ---- live games from aoe2companion's websocket ----------------------------------------
+
+    def _restart_api_watch(self) -> None:
+        if self._api_task:
+            self._api_task.cancel()
+            self._api_task = None
+        if config.DETECT != "folder" and self.me:
+            self._api_task = asyncio.create_task(self._watch_api(self.me))
+
+    async def _watch_api(self, profile_id: int) -> None:
+        async for kind, data in ongoing_events(profile_id):
+            try:
+                await self._on_api_event(kind, data)
+            except Exception:  # noqa: BLE001 - one bad event shouldn't stop detection
+                log.exception("could not handle live game event %s", kind)
+
+    async def _on_api_event(self, kind: str, data: dict) -> None:
+        live = self.state["status"] == "live"
+        if kind == "connected":
+            # A game loaded from the API that ended while we were disconnected.
+            if self._api_match is not None and live and self._api_match_id not in data["ongoing"]:
+                self._finish()
+        elif kind == "removed":
+            if data["matchId"] == self._api_match_id and live:
+                log.info("match %s ended", data["matchId"])
+                self._api_ended = True
+                self._finish()
+        elif kind == "added":
+            match_id = data["matchId"]
+            if match_id == self._api_match_id:
+                if not live and not self._api_ended:  # loaded from history, but it's running
+                    self.state["status"] = "live"
                     self._publish()
+                return  # already loaded (the connect snapshot repeats it)
+            if self.me not in {p.get("profileId") for p in data.get("players") or []}:
+                return
+            record = record_from_match(data)
+            if self._api_match is None and self._is_current_game(record):
+                # The recording got here first: keep it, but let the API end the game.
+                log.info("match %s is the game already loaded from its recording", match_id)
+                self._api_match_id = self.state["match"]["match_id"] = match_id
+                self.state["status"] = "live"
+                self._publish()
+                return
+            await self.load_api(data)
+            started = self._record.started if self._record else None
+            delay = f"{(datetime.now(timezone.utc) - started).total_seconds():.0f}s" if started else "?"
+            log.info("live match %s found by the API, %s after it started (mode: %s)",
+                     match_id, delay, config.DETECT)
+
+    def _is_current_game(self, record: RecordInfo) -> bool:
+        """Whether `record` is the loaded match seen from the other source (recording vs API)."""
+        current = self._record
+        if current is None or current.started is None or record.started is None:
+            return False
+        ids = {p.profile_id for p in current.players if p.profile_id}
+        close = abs((current.started - record.started).total_seconds()) < SAME_GAME_SECONDS
+        return close and bool(ids & {p.profile_id for p in record.players if p.profile_id})
 
 
 COMMS_SAMPLE = 10

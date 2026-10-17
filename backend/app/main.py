@@ -79,6 +79,21 @@ async def events() -> StreamingResponse:
 
 @app.get("/api/recordings")
 async def recordings() -> list[dict]:
+    """Past games to review: your recordings, or your API match history in API-only mode."""
+    service: LiveService = app.state.live
+    if config.DETECT == "api":
+        try:
+            matches = await service.recent_api_games()
+        except (httpx.HTTPError, RateLimited) as e:
+            raise HTTPException(502, f"could not load your matches: {e}")
+        return [{
+            "key": f"api:{m['matchId']}",
+            "started": m["started"],
+            "map_name": m.get("mapName"),
+            "players": sum(len(t.get("players") or []) for t in m.get("teams") or []),
+            "live": not m.get("finished"),
+        } for m in matches]
+
     def summarize() -> list[dict]:
         out = []
         for f in list_recordings(30):
@@ -87,7 +102,7 @@ async def recordings() -> list[dict]:
             except Exception:  # noqa: BLE001 - skip unreadable files
                 continue
             out.append({
-                "file": f.name,
+                "key": f.name,
                 "started": info.started.isoformat() if info.started else None,
                 "map_name": info.map_name,
                 "players": len(info.players),
@@ -98,20 +113,32 @@ async def recordings() -> list[dict]:
 
 
 class LoadRequest(BaseModel):
-    file: str | None = None  # file name from /api/recordings; omitted = latest
+    key: str | None = None  # a key from /api/recordings; omitted = latest game
 
 
 @app.post("/api/load")
 async def load(req: LoadRequest) -> dict:
+    service: LiveService = app.state.live
+    if config.DETECT == "api":
+        try:
+            matches = await service.recent_api_games()
+        except (httpx.HTTPError, RateLimited) as e:
+            raise HTTPException(502, f"could not load your matches: {e}")
+        target = matches[0] if matches and req.key is None else next(
+            (m for m in matches if f"api:{m['matchId']}" == req.key), None)
+        if target is None:
+            raise HTTPException(404, "match not found")
+        await service.load_api(target, live=not target.get("finished"))
+        return {"ok": True}
+
     files = list_recordings(200)
     if not files:
         raise HTTPException(404, "no recordings found")
     # Only allow files from the savegame folders (friends on the LAN can hit this endpoint).
-    target = files[0] if req.file is None else next((f for f in files if f.name == req.file), None)
+    target = files[0] if req.key is None else next((f for f in files if f.name == req.key), None)
     if target is None:
         raise HTTPException(404, "recording not found")
-    service: LiveService = app.state.live
-    await service.load(target, live=req.file is None and service.is_fresh(target))
+    await service.load(target, live=req.key is None and service.is_fresh(target))
     return {"ok": True}
 
 
