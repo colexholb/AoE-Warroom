@@ -34,10 +34,22 @@
         "desc": "Infantry (except Spearman-line"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "naval",
+      "infantry",
+      "archers",
+      "unique unit",
+      "monks",
+      "aggressive"
+    ],
+    "unit_focus": [
+      "naval",
+      "infantry",
+      "archer",
+      "monk"
+    ],
+    "ideal_comp": "Composite Bowman; Warrior Priest; Arbalester; Halberdier; Heavy Scorpion",
+    "watch_out": "cavalry raids and Skirmishers are a threat; archers and Hand Cannoneers kite your infantry"
   },
   "aztecs": {
     "name": "Aztecs",
@@ -68,10 +80,22 @@
         "desc": "Infantry +4 attack"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "infantry",
+      "monks",
+      "unique unit",
+      "boom",
+      "aggressive",
+      "late game"
+    ],
+    "unit_focus": [
+      "infantry",
+      "monk",
+      "archer",
+      "siege"
+    ],
+    "ideal_comp": "Jaguar Warrior; Champion; Siege Onager; Pikeman",
+    "watch_out": "archers and Hand Cannoneers kite your infantry"
   },
   "bengalis": {
     "name": "Bengalis",
@@ -103,10 +127,22 @@
         "desc": "Villagers and Monks take -10% population space"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "naval",
+      "elephants",
+      "cavalry archers",
+      "unique unit",
+      "boom",
+      "mobility"
+    ],
+    "unit_focus": [
+      "naval",
+      "elephant",
+      "cavalry archer",
+      "archer"
+    ],
+    "ideal_comp": "Ratha; Heavy Scorpion",
+    "watch_out": "Monks and Halberdiers shut down elephants; Halberdiers and Camel Riders counter your core"
   },
   "berbers": {
     "name": "Berbers",
@@ -141,10 +177,22 @@
         "desc": "Camel Units regenerate 15 HP per minute"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "naval",
+      "cavalry",
+      "cavalry archers",
+      "camels",
+      "unique unit",
+      "boom"
+    ],
+    "unit_focus": [
+      "naval",
+      "cavalry",
+      "cavalry archer",
+      "camel"
+    ],
+    "ideal_comp": "Camel Archer; Genitour; Cavalier; Heavy Scorpion",
+    "watch_out": "Halberdiers and Camel Riders counter your core"
   },
   "bohemians": {
     "name": "Bohemians",
@@ -181,10 +229,22 @@
         "desc": "Monks and Monastery technologies gold cost is replaced by food cost"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "gunpowder",
+      "monks",
+      "siege",
+      "unique unit",
+      "boom",
+      "aggressive"
+    ],
+    "unit_focus": [
+      "gunpowder",
+      "monk",
+      "siege",
+      "cavalry"
+    ],
+    "ideal_comp": "Hussite Wagon; Houfnice; Hand Cannoneer; Bombard Cannon; Halberdier",
+    "watch_out": "Onagers and Skirmishers punish grouped gunpowder; mobile units can pick off siege if unguarded"
   },
   "britons": {
     "name": "Britons",
@@ -214,10 +274,21 @@
         "desc": "Trebuchets deal blast damage and are more accurate"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "archers",
+      "unique unit",
+      "boom",
+      "aggressive",
+      "late game"
+    ],
+    "unit_focus": [
+      "archer",
+      "cavalry",
+      "infantry",
+      "siege"
+    ],
+    "ideal_comp": "Longbowman; Arbalester; Halberdier; Heavy Scorpion",
+    "watch_out": "cavalry raids and Skirmishers are a threat"
   },
   "bulgarians": {
     "name": "Bulgarians",
@@ -248,10 +319,22 @@
         "desc": "Militia-line +5 melee armor"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "infantry",
+      "cavalry",
+      "unique unit",
+      "boom",
+      "aggressive",
+      "mobility"
+    ],
+    "unit_focus": [
+      "infantry",
+      "cavalry",
+      "archer",
+      "siege"
+    ],
+    "ideal_comp": "Konnik; Cavalier; Heavy Cavalry Archer",
+    "watch_out": "Halberdiers and Camel Riders counter your core; archers and Hand Cannoneers kite your infantry"
   },
   "burgundians": {
     "name": "Burgundians",
@@ -287,10 +370,22 @@
         "desc": "All existing Villagers are transformed to Flemish Militia"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "cavalry",
+      "unique unit",
+      "infantry",
+      "boom",
+      "aggressive",
+      "mobility"
+    ],
+    "unit_focus": [
+      "cavalry",
+      "infantry",
+      "archer",
+      "siege"
+    ],
+    "ideal_comp": "Coustillier; Flemish Militia; Paladin",
+    "watch_out": "Halberdiers and Camel Riders counter your core; archers and Hand Cannoneers kite your infantry"
   },
   "burmese": {
     "name": "Burmese",
@@ -321,10 +416,22 @@
         "desc": "Battle Elephants +1 melee/+1 pierce armor"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "infantry",
+      "cavalry",
+      "unique unit",
+      "aggressive",
+      "mobility",
+      "rush"
+    ],
+    "unit_focus": [
+      "infantry",
+      "cavalry",
+      "archer",
+      "siege"
+    ],
+    "ideal_comp": "Arambai; Cavalier; Heavy Cavalry Archer",
+    "watch_out": "Halberdiers and Camel Riders counter your core; archers and Hand Cannoneers kite your infantry"
   },
   "byzantines": {
     "name": "Byzantines",
@@ -356,10 +463,22 @@
         "desc": "Cataphracts and Varangian Guards deal trample damage"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "defensive",
+      "cavalry",
+      "unique unit",
+      "boom",
+      "aggressive",
+      "turtle"
+    ],
+    "unit_focus": [
+      "defensive",
+      "cavalry",
+      "archer",
+      "infantry"
+    ],
+    "ideal_comp": "Cataphract; Paladin; Heavy Cavalry Archer",
+    "watch_out": "Halberdiers and Camel Riders counter your core"
   },
   "celts": {
     "name": "Celts",
@@ -390,10 +509,21 @@
         "desc": "Siege Weapons +40% HP"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "infantry",
+      "siege",
+      "unique unit",
+      "aggressive",
+      "rush"
+    ],
+    "unit_focus": [
+      "infantry",
+      "siege",
+      "cavalry",
+      "archer"
+    ],
+    "ideal_comp": "Woad Raider; Champion; Siege Onager; Halberdier",
+    "watch_out": "archers and Hand Cannoneers kite your infantry; mobile units can pick off siege if unguarded"
   },
   "chinese": {
     "name": "Chinese",
@@ -429,10 +559,22 @@
         "desc": "Scorpions, Rocket Carts and Lou Chuans +25% attack; Lou Chuans fire rockets"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "gunpowder",
+      "archers",
+      "unique unit",
+      "naval",
+      "boom",
+      "aggressive"
+    ],
+    "unit_focus": [
+      "gunpowder",
+      "archer",
+      "naval",
+      "cavalry"
+    ],
+    "ideal_comp": "Chu Ko Nu; Dragon Ship; Arbalester; Halberdier; Heavy Scorpion",
+    "watch_out": "cavalry raids and Skirmishers are a threat; Onagers and Skirmishers punish grouped gunpowder"
   },
   "cumans": {
     "name": "Cumans",
@@ -463,10 +605,22 @@
         "desc": "All team members can train 5 free Elite Kipchaks per Castle"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "cavalry",
+      "cavalry archers",
+      "unique unit",
+      "boom",
+      "aggressive",
+      "mobility"
+    ],
+    "unit_focus": [
+      "cavalry",
+      "cavalry archer",
+      "archer",
+      "infantry"
+    ],
+    "ideal_comp": "Kipchak; Paladin; Siege Onager",
+    "watch_out": "Halberdiers and Camel Riders counter your core"
   },
   "danes": {
     "name": "Danes",
@@ -497,10 +651,22 @@
         "desc": "Mangonel-line and Catapult Galleons +1 range; Siege Weapons and Siege Warships +40% attack vs buildings"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "infantry",
+      "siege",
+      "unique unit",
+      "boom",
+      "aggressive",
+      "late game"
+    ],
+    "unit_focus": [
+      "infantry",
+      "siege",
+      "cavalry",
+      "archer"
+    ],
+    "ideal_comp": "Jomsviking; Champion; Siege Onager; Halberdier",
+    "watch_out": "archers and Hand Cannoneers kite your infantry; mobile units can pick off siege if unguarded"
   },
   "dravidians": {
     "name": "Dravidians",
@@ -537,10 +703,21 @@
         "desc": "Infantry and Cavalry attacks ignore armor"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "naval",
+      "infantry",
+      "unique unit",
+      "aggressive",
+      "rush"
+    ],
+    "unit_focus": [
+      "naval",
+      "infantry",
+      "archer",
+      "siege"
+    ],
+    "ideal_comp": "Urumi Swordsman; Thirisadai; Champion; Siege Onager; Halberdier",
+    "watch_out": "archers and Hand Cannoneers kite your infantry"
   },
   "ethiopians": {
     "name": "Ethiopians",
@@ -570,10 +747,21 @@
         "desc": "Siege Workshop Units' blast radius increased"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "archers",
+      "infantry",
+      "unique unit",
+      "aggressive",
+      "rush"
+    ],
+    "unit_focus": [
+      "archer",
+      "infantry",
+      "cavalry",
+      "siege"
+    ],
+    "ideal_comp": "Shotel Warrior; Arbalester; Halberdier; Siege Onager",
+    "watch_out": "cavalry raids and Skirmishers are a threat; archers and Hand Cannoneers kite your infantry"
   },
   "franks": {
     "name": "Franks",
@@ -604,10 +792,22 @@
         "desc": "Stables work +40% faster"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "cavalry",
+      "infantry",
+      "unique unit",
+      "aggressive",
+      "mobility",
+      "rush"
+    ],
+    "unit_focus": [
+      "cavalry",
+      "infantry",
+      "archer",
+      "siege"
+    ],
+    "ideal_comp": "Throwing Axeman; Paladin",
+    "watch_out": "Halberdiers and Camel Riders counter your core; archers and Hand Cannoneers kite your infantry"
   },
   "georgians": {
     "name": "Georgians",
@@ -638,10 +838,22 @@
         "desc": "Mounted Units take -20% population space"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "defensive",
+      "cavalry",
+      "unique unit",
+      "boom",
+      "turtle",
+      "mobility"
+    ],
+    "unit_focus": [
+      "defensive",
+      "cavalry",
+      "archer",
+      "infantry"
+    ],
+    "ideal_comp": "Monaspa; Cavalier; Heavy Cavalry Archer",
+    "watch_out": "Halberdiers and Camel Riders counter your core"
   },
   "goths": {
     "name": "Goths",
@@ -673,10 +885,18 @@
         "desc": "Barracks work +100% faster"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "infantry",
+      "unique unit"
+    ],
+    "unit_focus": [
+      "infantry",
+      "cavalry",
+      "archer",
+      "siege"
+    ],
+    "ideal_comp": "Huskarl; Champion; Heavy Scorpion; Halberdier",
+    "watch_out": "archers and Hand Cannoneers kite your infantry"
   },
   "gurjaras": {
     "name": "Gurjaras",
@@ -716,10 +936,22 @@
         "desc": "Camel Riders and Elephant Archers +4 melee armor"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "cavalry",
+      "camels",
+      "infantry",
+      "unique unit",
+      "turtle",
+      "mobility"
+    ],
+    "unit_focus": [
+      "cavalry",
+      "camel",
+      "infantry",
+      "archer"
+    ],
+    "ideal_comp": "Chakram Thrower; Shrivamsha Rider",
+    "watch_out": "Halberdiers and Camel Riders counter your core; archers and Hand Cannoneers kite your infantry"
   },
   "hindustanis": {
     "name": "Hindustanis",
@@ -755,10 +987,22 @@
         "desc": "Hand Cannoneers +2 range"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "gunpowder",
+      "camels",
+      "infantry",
+      "unique unit",
+      "cavalry",
+      "boom"
+    ],
+    "unit_focus": [
+      "gunpowder",
+      "camel",
+      "infantry",
+      "cavalry"
+    ],
+    "ideal_comp": "Ghulam; Imperial Camel Rider; Heavy Cavalry Archer",
+    "watch_out": "Halberdiers and Camel Riders counter your core; archers and Hand Cannoneers kite your infantry"
   },
   "huns": {
     "name": "Huns",
@@ -789,10 +1033,22 @@
         "desc": "Enemy Relics generate -50% resources; Wonder and Relic victory takes +100 years"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "cavalry",
+      "unique unit",
+      "boom",
+      "aggressive",
+      "mobility",
+      "late game"
+    ],
+    "unit_focus": [
+      "cavalry",
+      "archer",
+      "infantry",
+      "siege"
+    ],
+    "ideal_comp": "Tarkan; Paladin; Heavy Cavalry Archer",
+    "watch_out": "Halberdiers and Camel Riders counter your core"
   },
   "incas": {
     "name": "Incas",
@@ -823,10 +1079,21 @@
         "desc": "Kamayuks, Slingers and Champi Warriors +1 melee/+1 pierce armor"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "infantry",
+      "unique unit",
+      "boom",
+      "aggressive",
+      "late game",
+      "rush"
+    ],
+    "unit_focus": [
+      "infantry",
+      "archer",
+      "siege"
+    ],
+    "ideal_comp": "Kamayuk; Heavy Scorpion; Halberdier",
+    "watch_out": "archers and Hand Cannoneers kite your infantry"
   },
   "italians": {
     "name": "Italians",
@@ -863,10 +1130,22 @@
         "desc": "Hand Cannoneers deal +15% pass through damage and are more accurate"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "naval",
+      "archers",
+      "unique unit",
+      "infantry",
+      "boom",
+      "aggressive"
+    ],
+    "unit_focus": [
+      "naval",
+      "archer",
+      "infantry",
+      "cavalry"
+    ],
+    "ideal_comp": "Genoese Crossbowman; Condottiero; Arbalester; Pikeman; Mangonel-line",
+    "watch_out": "cavalry raids and Skirmishers are a threat; archers and Hand Cannoneers kite your infantry"
   },
   "japanese": {
     "name": "Japanese",
@@ -897,10 +1176,20 @@
         "desc": "Trebuchets attack and pack/unpack faster"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "infantry",
+      "unique unit",
+      "aggressive",
+      "rush"
+    ],
+    "unit_focus": [
+      "infantry",
+      "cavalry",
+      "archer",
+      "siege"
+    ],
+    "ideal_comp": "Samurai; Champion; Heavy Scorpion; Halberdier",
+    "watch_out": "archers and Hand Cannoneers kite your infantry"
   },
   "jurchens": {
     "name": "Jurchens",
@@ -937,10 +1226,22 @@
         "desc": "Rocket Carts, Grenadiers and Lou Chuans detonate when defeated; projectiles produce additional explosions"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "gunpowder",
+      "cavalry",
+      "unique unit",
+      "aggressive",
+      "mobility",
+      "rush"
+    ],
+    "unit_focus": [
+      "gunpowder",
+      "cavalry",
+      "archer",
+      "infantry"
+    ],
+    "ideal_comp": "Iron Pagoda; Grenadier; Heavy Cavalry Archer",
+    "watch_out": "Halberdiers and Camel Riders counter your core; Onagers and Skirmishers punish grouped gunpowder"
   },
   "khitans": {
     "name": "Khitans",
@@ -976,10 +1277,22 @@
         "desc": "Cavalry regenerates HP in combat"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "infantry",
+      "cavalry",
+      "unique unit",
+      "siege",
+      "boom",
+      "mobility"
+    ],
+    "unit_focus": [
+      "infantry",
+      "cavalry",
+      "siege",
+      "archer"
+    ],
+    "ideal_comp": "Liao Dao; Mounted Trebuchet; Heavy Cavalry Archer",
+    "watch_out": "Halberdiers and Camel Riders counter your core; archers and Hand Cannoneers kite your infantry"
   },
   "khmer": {
     "name": "Khmer",
@@ -1010,10 +1323,22 @@
         "desc": "Ballista Elephants and Scorpions fire an additional projectile"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "siege",
+      "elephants",
+      "unique unit",
+      "boom",
+      "aggressive",
+      "turtle"
+    ],
+    "unit_focus": [
+      "siege",
+      "elephant",
+      "cavalry",
+      "archer"
+    ],
+    "ideal_comp": "Ballista Elephant; Skirmishers",
+    "watch_out": "Monks and Halberdiers shut down elephants; mobile units can pick off siege if unguarded"
   },
   "koreans": {
     "name": "Koreans",
@@ -1049,10 +1374,22 @@
         "desc": "Rocket Carts and Turtle Ships +1 range, fire additional projectiles"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "defensive",
+      "naval",
+      "cavalry archers",
+      "unique unit",
+      "aggressive",
+      "turtle"
+    ],
+    "unit_focus": [
+      "defensive",
+      "naval",
+      "cavalry archer",
+      "cavalry"
+    ],
+    "ideal_comp": "War Wagon; Turtle Ship; Cavalier",
+    "watch_out": "Halberdiers and Camel Riders counter your core"
   },
   "lithuanians": {
     "name": "Lithuanians",
@@ -1087,10 +1424,22 @@
         "desc": "Spearman-line and Skirmishers +2 pierce armor"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "cavalry",
+      "monks",
+      "unique unit",
+      "boom",
+      "aggressive",
+      "turtle"
+    ],
+    "unit_focus": [
+      "cavalry",
+      "monk",
+      "archer",
+      "infantry"
+    ],
+    "ideal_comp": "Leitis; Winged Hussar; Paladin; Heavy Cavalry Archer",
+    "watch_out": "Halberdiers and Camel Riders counter your core"
   },
   "magyars": {
     "name": "Magyars",
@@ -1120,10 +1469,21 @@
         "desc": "Mounted Archers +1 attack, +1 range"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "cavalry",
+      "unique unit",
+      "boom",
+      "mobility",
+      "late game"
+    ],
+    "unit_focus": [
+      "cavalry",
+      "archer",
+      "infantry",
+      "siege"
+    ],
+    "ideal_comp": "Magyar Huszar; Paladin; Heavy Cavalry Archer",
+    "watch_out": "Halberdiers and Camel Riders counter your core"
   },
   "malay": {
     "name": "Malay",
@@ -1154,10 +1514,22 @@
         "desc": "Militia-line gold cost is replaced by additional food cost"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "naval",
+      "infantry",
+      "unique unit",
+      "boom",
+      "aggressive",
+      "late game"
+    ],
+    "unit_focus": [
+      "naval",
+      "infantry",
+      "cavalry",
+      "archer"
+    ],
+    "ideal_comp": "Karambit Warrior; Two-Handed Swordsman; Heavy Scorpion; Halberdier",
+    "watch_out": "archers and Hand Cannoneers kite your infantry"
   },
   "malians": {
     "name": "Malians",
@@ -1187,10 +1559,22 @@
         "desc": "Cavalry +5 attack"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "infantry",
+      "unique unit",
+      "boom",
+      "aggressive",
+      "late game",
+      "rush"
+    ],
+    "unit_focus": [
+      "infantry",
+      "cavalry",
+      "archer",
+      "siege"
+    ],
+    "ideal_comp": "Gbeto; Champion; Siege Onager; Pikeman",
+    "watch_out": "archers and Hand Cannoneers kite your infantry"
   },
   "mapuche": {
     "name": "Mapuche",
@@ -1227,10 +1611,22 @@
         "desc": "Team Castle Unique Units and Bolas Riders cost -15%"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "cavalry",
+      "defensive",
+      "unique unit",
+      "cavalry archers",
+      "turtle",
+      "mobility"
+    ],
+    "unit_focus": [
+      "cavalry",
+      "defensive",
+      "cavalry archer",
+      "archer"
+    ],
+    "ideal_comp": "Kona; Bolas Rider; Heavy Scorpion",
+    "watch_out": "Halberdiers and Camel Riders counter your core"
   },
   "mayans": {
     "name": "Mayans",
@@ -1260,10 +1656,22 @@
         "desc": "Eagle Warriors +40 HP"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "archers",
+      "eagles",
+      "unique unit",
+      "boom",
+      "aggressive",
+      "mobility"
+    ],
+    "unit_focus": [
+      "archer",
+      "eagle",
+      "infantry",
+      "siege"
+    ],
+    "ideal_comp": "Plumed Archer; Arbalester; Halberdier; Heavy Scorpion",
+    "watch_out": "cavalry raids and Skirmishers are a threat; infantry and Hand Cannoneers beat Eagles"
   },
   "mongols": {
     "name": "Mongols",
@@ -1293,10 +1701,22 @@
         "desc": "Siege Workshop Units move +50% faster"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "cavalry archers",
+      "cavalry",
+      "archers",
+      "unique unit",
+      "aggressive",
+      "mobility"
+    ],
+    "unit_focus": [
+      "cavalry archer",
+      "cavalry",
+      "archer",
+      "infantry"
+    ],
+    "ideal_comp": "Mangudai; Cavalier; Siege Onager",
+    "watch_out": "Halberdiers and Camel Riders counter your core; cavalry raids and Skirmishers are a threat"
   },
   "muisca": {
     "name": "Muisca",
@@ -1333,10 +1753,22 @@
         "desc": "Slingers +1 range; train +50% faster"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "monks",
+      "archers",
+      "unique unit",
+      "infantry",
+      "boom",
+      "aggressive"
+    ],
+    "unit_focus": [
+      "monk",
+      "archer",
+      "infantry",
+      "siege"
+    ],
+    "ideal_comp": "Guecha Warrior; Temple Guard; Arbalester; Pikeman; Siege Onager",
+    "watch_out": "cavalry raids and Skirmishers are a threat; archers and Hand Cannoneers kite your infantry"
   },
   "persians": {
     "name": "Persians",
@@ -1372,10 +1804,22 @@
         "desc": "Castles +4 attack, +3 vs. Rams, +3 vs. Infantry and receive -25% bonus damage"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "cavalry",
+      "elephants",
+      "unique unit",
+      "boom",
+      "aggressive",
+      "mobility"
+    ],
+    "unit_focus": [
+      "cavalry",
+      "elephant",
+      "archer",
+      "infantry"
+    ],
+    "ideal_comp": "War Elephant; Savar; Cavalier; Heavy Cavalry Archer",
+    "watch_out": "Monks and Halberdiers shut down elephants; Halberdiers and Camel Riders counter your core"
   },
   "poles": {
     "name": "Poles",
@@ -1411,10 +1855,22 @@
         "desc": "Scout Cavalry-line deals trample damage"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "cavalry",
+      "infantry",
+      "unique unit",
+      "boom",
+      "aggressive",
+      "mobility"
+    ],
+    "unit_focus": [
+      "cavalry",
+      "infantry",
+      "archer",
+      "siege"
+    ],
+    "ideal_comp": "Obuch; Winged Hussar; Cavalier",
+    "watch_out": "Halberdiers and Camel Riders counter your core; archers and Hand Cannoneers kite your infantry"
   },
   "portuguese": {
     "name": "Portuguese",
@@ -1450,10 +1906,21 @@
         "desc": "Gunpowder Units fire more accurately at moving targets"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "gunpowder",
+      "naval",
+      "siege",
+      "unique unit",
+      "aggressive"
+    ],
+    "unit_focus": [
+      "gunpowder",
+      "naval",
+      "siege",
+      "cavalry"
+    ],
+    "ideal_comp": "Organ Gun; Caravel; Hand Cannoneer; Bombard Cannon; Halberdier",
+    "watch_out": "Onagers and Skirmishers punish grouped gunpowder; mobile units can pick off siege if unguarded"
   },
   "romans": {
     "name": "Romans",
@@ -1489,10 +1956,22 @@
         "desc": "Militia-line, Knight-line, and Centurions train +50% faster and receive a charge attack"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "infantry",
+      "cavalry",
+      "unique unit",
+      "boom",
+      "aggressive",
+      "mobility"
+    ],
+    "unit_focus": [
+      "infantry",
+      "cavalry",
+      "archer",
+      "siege"
+    ],
+    "ideal_comp": "Centurion; Legionary; Cavalier; Heavy Cavalry Archer",
+    "watch_out": "Halberdiers and Camel Riders counter your core; archers and Hand Cannoneers kite your infantry"
   },
   "saracens": {
     "name": "Saracens",
@@ -1523,10 +2002,22 @@
         "desc": "Trebuchets and Mangonel-line +15% attack"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "naval",
+      "camels",
+      "cavalry",
+      "unique unit",
+      "aggressive",
+      "mobility"
+    ],
+    "unit_focus": [
+      "naval",
+      "camel",
+      "cavalry",
+      "archer"
+    ],
+    "ideal_comp": "Mameluke; Knight; Heavy Cavalry Archer",
+    "watch_out": "Halberdiers and Camel Riders counter your core"
   },
   "saxons": {
     "name": "Saxons",
@@ -1557,10 +2048,22 @@
         "desc": "Infantry gain additional armor when massed"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "defensive",
+      "infantry",
+      "unique unit",
+      "boom",
+      "aggressive",
+      "turtle"
+    ],
+    "unit_focus": [
+      "defensive",
+      "infantry",
+      "cavalry",
+      "archer"
+    ],
+    "ideal_comp": "Hearth Troop; Champion; Heavy Scorpion; Halberdier",
+    "watch_out": "archers and Hand Cannoneers kite your infantry"
   },
   "shu": {
     "name": "Shu",
@@ -1600,10 +2103,22 @@
         "desc": "Archer-line, War Chariots and Lou Chuans fire additional projectiles"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "siege",
+      "archers",
+      "infantry",
+      "unique unit",
+      "cavalry archers",
+      "aggressive"
+    ],
+    "unit_focus": [
+      "siege",
+      "archer",
+      "infantry",
+      "cavalry archer"
+    ],
+    "ideal_comp": "White Feather Guard; War Chariot; Mangonel-line",
+    "watch_out": "Halberdiers and Camel Riders counter your core; cavalry raids and Skirmishers are a threat"
   },
   "sicilians": {
     "name": "Sicilians",
@@ -1635,10 +2150,22 @@
         "desc": "Knight-line +1 melee/+2 pierce armor"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "infantry",
+      "cavalry",
+      "unique unit",
+      "boom",
+      "mobility",
+      "late game"
+    ],
+    "unit_focus": [
+      "infantry",
+      "cavalry",
+      "archer",
+      "siege"
+    ],
+    "ideal_comp": "Serjeant; Cavalier",
+    "watch_out": "Halberdiers and Camel Riders counter your core; archers and Hand Cannoneers kite your infantry"
   },
   "slavs": {
     "name": "Slavs",
@@ -1669,10 +2196,22 @@
         "desc": "Infantry deals trample damage"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "infantry",
+      "siege",
+      "cavalry",
+      "unique unit",
+      "boom",
+      "aggressive"
+    ],
+    "unit_focus": [
+      "infantry",
+      "siege",
+      "cavalry",
+      "archer"
+    ],
+    "ideal_comp": "Boyar; Cavalier; Heavy Cavalry Archer",
+    "watch_out": "Halberdiers and Camel Riders counter your core; archers and Hand Cannoneers kite your infantry"
   },
   "spanish": {
     "name": "Spanish",
@@ -1709,10 +2248,20 @@
         "desc": "Villagers +40 HP, +6 attack, +2 melee/+2 pierce armor"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "gunpowder",
+      "monks",
+      "unique unit",
+      "aggressive"
+    ],
+    "unit_focus": [
+      "gunpowder",
+      "monk",
+      "cavalry",
+      "archer"
+    ],
+    "ideal_comp": "Conquistador; Missionary; Hand Cannoneer; Bombard Cannon; Halberdier",
+    "watch_out": "Onagers and Skirmishers punish grouped gunpowder"
   },
   "tatars": {
     "name": "Tatars",
@@ -1748,10 +2297,22 @@
         "desc": "Trebuchets +2 range"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "cavalry archers",
+      "cavalry",
+      "archers",
+      "unique unit",
+      "siege",
+      "camels"
+    ],
+    "unit_focus": [
+      "cavalry archer",
+      "cavalry",
+      "archer",
+      "siege"
+    ],
+    "ideal_comp": "Keshik; Flaming Camel; Cavalier; Heavy Scorpion",
+    "watch_out": "Halberdiers and Camel Riders counter your core; cavalry raids and Skirmishers are a threat"
   },
   "teutons": {
     "name": "Teutons",
@@ -1783,10 +2344,22 @@
         "desc": "Castles +3 range, garrisoned Infantry fires arrows"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "defensive",
+      "infantry",
+      "unique unit",
+      "boom",
+      "aggressive",
+      "turtle"
+    ],
+    "unit_focus": [
+      "defensive",
+      "infantry",
+      "cavalry",
+      "archer"
+    ],
+    "ideal_comp": "Teutonic Knight; Champion; Siege Onager; Halberdier",
+    "watch_out": "archers and Hand Cannoneers kite your infantry"
   },
   "tupi": {
     "name": "Tupi",
@@ -1822,10 +2395,21 @@
         "desc": "Foot Archers and Fortifications deal poison damage"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "infantry",
+      "archers",
+      "unique unit",
+      "boom",
+      "aggressive",
+      "turtle"
+    ],
+    "unit_focus": [
+      "infantry",
+      "archer",
+      "siege"
+    ],
+    "ideal_comp": "Blackwood Archer; Ibirapema Warrior; Arbalester; Halberdier; Heavy Scorpion",
+    "watch_out": "cavalry raids and Skirmishers are a threat; archers and Hand Cannoneers kite your infantry"
   },
   "turks": {
     "name": "Turks",
@@ -1856,10 +2440,19 @@
         "desc": "Bombard Towers, Bombard Cannons, Cannon Galleons +2 range"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "gunpowder",
+      "unique unit",
+      "aggressive"
+    ],
+    "unit_focus": [
+      "gunpowder",
+      "cavalry",
+      "archer",
+      "infantry"
+    ],
+    "ideal_comp": "Janissary; Hand Cannoneer; Bombard Cannon; Spearman",
+    "watch_out": "Onagers and Skirmishers punish grouped gunpowder"
   },
   "varangians": {
     "name": "Varangians",
@@ -1890,10 +2483,22 @@
         "desc": "Varangian Guards throw axes periodically"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "naval",
+      "cavalry",
+      "unique unit",
+      "aggressive",
+      "mobility",
+      "rush"
+    ],
+    "unit_focus": [
+      "naval",
+      "cavalry",
+      "archer",
+      "infantry"
+    ],
+    "ideal_comp": "Jarl; Cavalier",
+    "watch_out": "Halberdiers and Camel Riders counter your core"
   },
   "vietnamese": {
     "name": "Vietnamese",
@@ -1929,10 +2534,20 @@
         "desc": "Lumberjacks slowly generate gold in addition to wood"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "archers",
+      "unique unit",
+      "boom",
+      "late game"
+    ],
+    "unit_focus": [
+      "archer",
+      "cavalry",
+      "infantry",
+      "siege"
+    ],
+    "ideal_comp": "Rattan Archer; Imperial Skirmisher; Arbalester; Halberdier; Mangonel-line",
+    "watch_out": "cavalry raids and Skirmishers are a threat"
   },
   "vikings": {
     "name": "Vikings",
@@ -1962,10 +2577,21 @@
         "desc": "Archer-line and Longships +1 attack"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "naval",
+      "infantry",
+      "unique unit",
+      "aggressive",
+      "rush"
+    ],
+    "unit_focus": [
+      "naval",
+      "infantry",
+      "cavalry",
+      "archer"
+    ],
+    "ideal_comp": "Berserk; Champion; Heavy Scorpion; Pikeman",
+    "watch_out": "archers and Hand Cannoneers kite your infantry"
   },
   "wei": {
     "name": "Wei",
@@ -2005,10 +2631,22 @@
         "desc": "Mounted Units +4 melee armor"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "cavalry",
+      "unique unit",
+      "cavalry archers",
+      "boom",
+      "aggressive",
+      "mobility"
+    ],
+    "unit_focus": [
+      "cavalry",
+      "cavalry archer",
+      "archer",
+      "infantry"
+    ],
+    "ideal_comp": "Tiger Cavalry; Xianbei Raider; Heavy Scorpion",
+    "watch_out": "Halberdiers and Camel Riders counter your core"
   },
   "wu": {
     "name": "Wu",
@@ -2049,9 +2687,19 @@
         "desc": "Traction Trebuchets and Lou Chuan trebuchet weapons fire additional projectiles"
       }
     ],
-    "playstyle_tags": [],
-    "unit_focus": [],
-    "ideal_comp": "",
-    "watch_out": ""
+    "playstyle_tags": [
+      "naval",
+      "infantry",
+      "archers",
+      "unique unit"
+    ],
+    "unit_focus": [
+      "naval",
+      "infantry",
+      "archer",
+      "siege"
+    ],
+    "ideal_comp": "Fire Archer; Jian Swordsman; Arbalester; Halberdier; Heavy Scorpion",
+    "watch_out": "cavalry raids and Skirmishers are a threat; archers and Hand Cannoneers kite your infantry"
   }
 }
