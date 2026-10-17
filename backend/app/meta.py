@@ -126,6 +126,7 @@ def options() -> dict:
         "units": unit_names,
         "techs": tech_names,
         "counter_units": counter_units,
+        "civs": civ_list(),
     }
 
 
