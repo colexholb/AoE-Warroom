@@ -1,0 +1,1098 @@
+{
+  "counters": {
+    "Archer": {
+      "generic": [
+        "Skirmishers",
+        "Mangonels",
+        "Knights"
+      ],
+      "group": "ranged",
+      "civ_answers": [
+        {
+          "civ": "*",
+          "answer": "Skirmisher",
+          "note": "anti-archer"
+        },
+        {
+          "civ": "*",
+          "answer": "Scout Cavalry",
+          "note": "raids the Archery Range"
+        }
+      ]
+    },
+    "Skirmisher": {
+      "generic": [
+        "Knights",
+        "Militia line",
+        "Scorpions"
+      ],
+      "group": "ranged",
+      "civ_answers": []
+    },
+    "Hand Cannoneer": {
+      "generic": [
+        "Skirmishers",
+        "Mangonels",
+        "Knights"
+      ],
+      "group": "ranged",
+      "civ_answers": []
+    },
+    "Cavalry Archer": {
+      "generic": [
+        "Skirmishers",
+        "Camel Archers / Genitours"
+      ],
+      "group": "ranged",
+      "civ_answers": [
+        {
+          "civ": "*",
+          "answer": "Elite Skirmisher",
+          "note": "anti-archer ranged unit"
+        },
+        {
+          "civ": "*",
+          "answer": "Camel Rider",
+          "note": "catches and kills"
+        },
+        {
+          "civ": "mongols",
+          "answer": "Mangudai",
+          "note": "faster fire and mobility"
+        }
+      ]
+    },
+    "Slinger": {
+      "generic": [
+        "Knights",
+        "Archers"
+      ],
+      "group": "ranged",
+      "civ_answers": []
+    },
+    "Genitour": {
+      "generic": [
+        "Knights",
+        "Archers"
+      ],
+      "group": "ranged",
+      "civ_answers": []
+    },
+    "Elephant Archer": {
+      "generic": [
+        "Spearmen",
+        "Monks",
+        "Skirmishers"
+      ],
+      "group": "ranged",
+      "civ_answers": []
+    },
+    "Scout Cavalry": {
+      "generic": [
+        "Spearmen",
+        "Camels"
+      ],
+      "group": "cavalry",
+      "civ_answers": [
+        {
+          "civ": "*",
+          "answer": "Spearman",
+          "note": "classic counter"
+        },
+        {
+          "civ": "*",
+          "answer": "Camel Rider",
+          "note": "cavalry trade"
+        }
+      ]
+    },
+    "Knight": {
+      "generic": [
+        "Spearmen",
+        "Camels",
+        "Monks"
+      ],
+      "group": "cavalry",
+      "civ_answers": [
+        {
+          "civ": "aztecs",
+          "answer": "Monks",
+          "note": "Aztec monks are especially strong"
+        },
+        {
+          "civ": "byzantines",
+          "answer": "Camel Riders",
+          "note": "cheap anti-cavalry"
+        },
+        {
+          "civ": "goths",
+          "answer": "Huskarl",
+          "note": "pierce armor shrugs off knights"
+        }
+      ]
+    },
+    "Camel Rider": {
+      "generic": [
+        "Spearmen",
+        "Archers",
+        "Militia line"
+      ],
+      "group": "cavalry",
+      "civ_answers": [
+        {
+          "civ": "*",
+          "answer": "Spearman",
+          "note": "spear line counters camels"
+        },
+        {
+          "civ": "*",
+          "answer": "Archers",
+          "note": "kite from range"
+        }
+      ]
+    },
+    "Camel Scout": {
+      "generic": [
+        "Spearmen",
+        "Archers"
+      ],
+      "group": "cavalry",
+      "civ_answers": []
+    },
+    "Battle Elephant": {
+      "generic": [
+        "Monks",
+        "Spearmen"
+      ],
+      "group": "cavalry",
+      "civ_answers": [
+        {
+          "civ": "*",
+          "answer": "Halberdier",
+          "note": "bonus damage"
+        },
+        {
+          "civ": "*",
+          "answer": "Monk",
+          "note": "convert the expensive elephant"
+        }
+      ]
+    },
+    "War Elephant": {
+      "generic": [
+        "Monks",
+        "Spearmen"
+      ],
+      "group": "cavalry",
+      "civ_answers": [
+        {
+          "civ": "*",
+          "answer": "Halberdier",
+          "note": "cheap counter"
+        },
+        {
+          "civ": "*",
+          "answer": "Monk",
+          "note": "converts the expensive unit"
+        },
+        {
+          "civ": "aztecs",
+          "answer": "Halberdier + Monk",
+          "note": "Aztec monks convert quickly"
+        }
+      ]
+    },
+    "Steppe Lancer": {
+      "generic": [
+        "Spearmen",
+        "Camels"
+      ],
+      "group": "cavalry",
+      "civ_answers": []
+    },
+    "Fire Lancer": {
+      "generic": [
+        "Spearmen",
+        "Archers"
+      ],
+      "group": "cavalry",
+      "civ_answers": []
+    },
+    "Militia": {
+      "generic": [
+        "Archers",
+        "Scorpions",
+        "Hand Cannoneers"
+      ],
+      "group": "infantry",
+      "civ_answers": [
+        {
+          "civ": "*",
+          "answer": "Archer",
+          "note": "kite infantry"
+        },
+        {
+          "civ": "*",
+          "answer": "Scorpion",
+          "note": "pass-through damage"
+        }
+      ]
+    },
+    "Flemish Militia": {
+      "generic": [
+        "Archers",
+        "Scorpions",
+        "Hand Cannoneers"
+      ],
+      "group": "infantry",
+      "civ_answers": []
+    },
+    "Spearman": {
+      "generic": [
+        "Archers",
+        "Militia line",
+        "Scorpions"
+      ],
+      "group": "infantry",
+      "civ_answers": [
+        {
+          "civ": "*",
+          "answer": "Archer",
+          "note": "ranged units punish spears"
+        },
+        {
+          "civ": "*",
+          "answer": "Militia-line",
+          "note": "swords beat spears"
+        }
+      ]
+    },
+    "Eagle Scout": {
+      "generic": [
+        "Militia line",
+        "Knights"
+      ],
+      "group": "infantry",
+      "civ_answers": [
+        {
+          "civ": "*",
+          "answer": "Militia-line",
+          "note": "infantry beats eagles"
+        },
+        {
+          "civ": "*",
+          "answer": "Knight",
+          "note": "if your civ has it"
+        }
+      ]
+    },
+    "Champi Scout": {
+      "generic": [
+        "Militia line",
+        "Knights"
+      ],
+      "group": "infantry",
+      "civ_answers": []
+    },
+    "Scorpion": {
+      "generic": [
+        "Knights",
+        "Mangonels"
+      ],
+      "group": "siege",
+      "civ_answers": [
+        {
+          "civ": "mongols",
+          "answer": "Mangudai",
+          "note": "outrange and hit-and-run"
+        },
+        {
+          "civ": "mongols",
+          "answer": "Siege Onager + Drill",
+          "note": "Drill lets siege catch them"
+        },
+        {
+          "civ": "*",
+          "answer": "Bombard Cannon",
+          "note": "outranges if it can sit still"
+        }
+      ]
+    },
+    "Mangonel": {
+      "generic": [
+        "Knights",
+        "Light Cavalry"
+      ],
+      "group": "siege",
+      "civ_answers": [
+        {
+          "civ": "*",
+          "answer": "Bombard Cannon",
+          "note": "outranges Onagers"
+        },
+        {
+          "civ": "britons",
+          "answer": "Yeomen Longbowman",
+          "note": "extra range kites Mangonels"
+        }
+      ]
+    },
+    "Battering Ram": {
+      "generic": [
+        "Militia line",
+        "Knights"
+      ],
+      "group": "siege",
+      "civ_answers": []
+    },
+    "Bombard Cannon": {
+      "generic": [
+        "Knights",
+        "Light Cavalry"
+      ],
+      "group": "siege",
+      "civ_answers": [
+        {
+          "civ": "*",
+          "answer": "Hussar",
+          "note": "snipes the cannon"
+        },
+        {
+          "civ": "*",
+          "answer": "Eagle Warrior",
+          "note": "fast, high pierce armor"
+        },
+        {
+          "civ": "huns",
+          "answer": "Tarkan",
+          "note": "high pierce armor anti-building cavalry"
+        }
+      ]
+    },
+    "Trebuchet": {
+      "generic": [
+        "Knights",
+        "Light Cavalry"
+      ],
+      "group": "siege",
+      "civ_answers": []
+    },
+    "Traction Trebuchet": {
+      "generic": [
+        "Knights",
+        "Light Cavalry"
+      ],
+      "group": "siege",
+      "civ_answers": []
+    },
+    "Mounted Trebuchet": {
+      "generic": [
+        "Knights",
+        "Light Cavalry"
+      ],
+      "group": "siege",
+      "civ_answers": []
+    },
+    "Organ Gun": {
+      "generic": [
+        "Knights",
+        "Mangonels"
+      ],
+      "group": "siege",
+      "civ_answers": []
+    },
+    "Ballista Elephant": {
+      "generic": [
+        "Spearmen",
+        "Monks",
+        "Mangonels"
+      ],
+      "group": "siege",
+      "civ_answers": []
+    },
+    "Rocket Cart": {
+      "generic": [
+        "Knights",
+        "Light Cavalry"
+      ],
+      "group": "siege",
+      "civ_answers": []
+    },
+    "Armored Elephant": {
+      "generic": [
+        "Spearmen",
+        "Militia line"
+      ],
+      "group": "siege",
+      "civ_answers": []
+    },
+    "Siege Elephant": {
+      "generic": [
+        "Spearmen",
+        "Militia line"
+      ],
+      "group": "siege",
+      "civ_answers": []
+    },
+    "Petard": {
+      "generic": [
+        "Archers",
+        "Light Cavalry"
+      ],
+      "group": "siege",
+      "civ_answers": []
+    },
+    "Siege Tower": {
+      "generic": [
+        "Knights",
+        "Militia line"
+      ],
+      "group": "siege",
+      "civ_answers": []
+    },
+    "Monk": {
+      "generic": [
+        "Light Cavalry",
+        "Eagles"
+      ],
+      "group": "monk",
+      "civ_answers": [
+        {
+          "civ": "*",
+          "answer": "Light Cavalry",
+          "note": "resistant to conversion"
+        },
+        {
+          "civ": "*",
+          "answer": "Eagle Warrior",
+          "note": "conversion resistant"
+        },
+        {
+          "civ": "aztecs",
+          "answer": "Eagle Warrior",
+          "note": "fast and monk-resistant"
+        }
+      ]
+    },
+    "Missionary": {
+      "generic": [
+        "Light Cavalry",
+        "Eagles"
+      ],
+      "group": "monk",
+      "civ_answers": []
+    },
+    "Warrior Priest": {
+      "generic": [
+        "Archers",
+        "Light Cavalry"
+      ],
+      "group": "monk",
+      "civ_answers": []
+    },
+    "Chu Ko Nu": {
+      "generic": [
+        "Skirmishers",
+        "Mangonels"
+      ],
+      "group": "ranged",
+      "civ_answers": []
+    },
+    "Longbowman": {
+      "generic": [
+        "Skirmishers",
+        "Mangonels",
+        "Knights"
+      ],
+      "group": "ranged",
+      "civ_answers": []
+    },
+    "Mangudai": {
+      "generic": [
+        "Skirmishers",
+        "Camel Archers / Genitours"
+      ],
+      "group": "ranged",
+      "civ_answers": []
+    },
+    "Janissary": {
+      "generic": [
+        "Archers",
+        "Mangonels",
+        "Huskarls"
+      ],
+      "group": "ranged",
+      "civ_answers": []
+    },
+    "Genoese Crossbowman": {
+      "generic": [
+        "Skirmishers",
+        "Mangonels",
+        "Militia line"
+      ],
+      "group": "ranged",
+      "civ_answers": []
+    },
+    "Conquistador": {
+      "generic": [
+        "Skirmishers",
+        "Camels"
+      ],
+      "group": "ranged",
+      "civ_answers": []
+    },
+    "Camel Archer": {
+      "generic": [
+        "Skirmishers",
+        "Genitours"
+      ],
+      "group": "ranged",
+      "civ_answers": []
+    },
+    "Rattan Archer": {
+      "generic": [
+        "Mangonels",
+        "Militia line",
+        "Eagles"
+      ],
+      "group": "ranged",
+      "civ_answers": []
+    },
+    "Mounted Crossbowman": {
+      "generic": [
+        "Skirmishers",
+        "Camels"
+      ],
+      "group": "ranged",
+      "civ_answers": []
+    },
+    "Gbeto": {
+      "generic": [
+        "Archers",
+        "Knights"
+      ],
+      "group": "ranged",
+      "civ_answers": []
+    },
+    "War Wagon": {
+      "generic": [
+        "Camels",
+        "Militia line",
+        "Bombard Cannons"
+      ],
+      "group": "ranged",
+      "civ_answers": []
+    },
+    "Hussite Wagon": {
+      "generic": [
+        "Militia line",
+        "Mangonels",
+        "Knights"
+      ],
+      "group": "ranged",
+      "civ_answers": []
+    },
+    "Bolas Rider": {
+      "generic": [
+        "Skirmishers",
+        "Camels"
+      ],
+      "group": "ranged",
+      "civ_answers": []
+    },
+    "Composite Bowman": {
+      "generic": [
+        "Knights",
+        "Mangonels"
+      ],
+      "group": "ranged",
+      "civ_answers": []
+    },
+    "Throwing Axeman": {
+      "generic": [
+        "Archers",
+        "Knights"
+      ],
+      "group": "ranged",
+      "civ_answers": []
+    },
+    "Chakram Thrower": {
+      "generic": [
+        "Archers",
+        "Knights"
+      ],
+      "group": "ranged",
+      "civ_answers": []
+    },
+    "Grenadier": {
+      "generic": [
+        "Knights",
+        "Skirmishers"
+      ],
+      "group": "ranged",
+      "civ_answers": []
+    },
+    "Plumed Archer": {
+      "generic": [
+        "Skirmishers",
+        "Mangonels",
+        "Eagles"
+      ],
+      "group": "ranged",
+      "civ_answers": []
+    },
+    "Blackwood Archer": {
+      "generic": [
+        "Skirmishers",
+        "Mangonels",
+        "Knights"
+      ],
+      "group": "ranged",
+      "civ_answers": []
+    },
+    "Ratha": {
+      "generic": [
+        "Skirmishers",
+        "Spearmen"
+      ],
+      "group": "ranged",
+      "civ_answers": []
+    },
+    "Fire Archer": {
+      "generic": [
+        "Skirmishers",
+        "Mangonels",
+        "Knights"
+      ],
+      "group": "ranged",
+      "civ_answers": []
+    },
+    "Kipchak": {
+      "generic": [
+        "Skirmishers",
+        "Camel Archers / Genitours"
+      ],
+      "group": "ranged",
+      "civ_answers": []
+    },
+    "Xianbei Raider": {
+      "generic": [
+        "Skirmishers",
+        "Camels"
+      ],
+      "group": "ranged",
+      "civ_answers": []
+    },
+    "War Chariot": {
+      "generic": [
+        "Skirmishers",
+        "Spearmen"
+      ],
+      "group": "ranged",
+      "civ_answers": []
+    },
+    "Arambai": {
+      "generic": [
+        "Skirmishers",
+        "Archers"
+      ],
+      "group": "ranged",
+      "civ_answers": []
+    },
+    "Magyar Huszar": {
+      "generic": [
+        "Spearmen",
+        "Camels"
+      ],
+      "group": "cavalry",
+      "civ_answers": []
+    },
+    "Boyar": {
+      "generic": [
+        "Spearmen",
+        "Camels",
+        "Monks"
+      ],
+      "group": "cavalry",
+      "civ_answers": []
+    },
+    "Tarkan": {
+      "generic": [
+        "Spearmen",
+        "Camels",
+        "Archers"
+      ],
+      "group": "cavalry",
+      "civ_answers": []
+    },
+    "Monaspa": {
+      "generic": [
+        "Spearmen",
+        "Camels"
+      ],
+      "group": "cavalry",
+      "civ_answers": []
+    },
+    "Mameluke": {
+      "generic": [
+        "Militia line",
+        "Archers"
+      ],
+      "group": "cavalry",
+      "civ_answers": []
+    },
+    "Cataphract": {
+      "generic": [
+        "Militia line",
+        "Archers",
+        "Monks"
+      ],
+      "group": "cavalry",
+      "civ_answers": []
+    },
+    "Leitis": {
+      "generic": [
+        "Camels",
+        "Spearmen",
+        "Monks"
+      ],
+      "group": "cavalry",
+      "civ_answers": []
+    },
+    "Shrivamsha Rider": {
+      "generic": [
+        "Spearmen",
+        "Camels"
+      ],
+      "group": "cavalry",
+      "civ_answers": []
+    },
+    "Iron Pagoda": {
+      "generic": [
+        "Spearmen",
+        "Monks"
+      ],
+      "group": "cavalry",
+      "civ_answers": []
+    },
+    "Konnik": {
+      "generic": [
+        "Spearmen",
+        "Camels"
+      ],
+      "group": "cavalry",
+      "civ_answers": []
+    },
+    "Keshik": {
+      "generic": [
+        "Spearmen",
+        "Camels"
+      ],
+      "group": "cavalry",
+      "civ_answers": []
+    },
+    "Tiger Cavalry": {
+      "generic": [
+        "Spearmen",
+        "Camels"
+      ],
+      "group": "cavalry",
+      "civ_answers": []
+    },
+    "Centurion": {
+      "generic": [
+        "Spearmen",
+        "Camels"
+      ],
+      "group": "cavalry",
+      "civ_answers": []
+    },
+    "Coustillier": {
+      "generic": [
+        "Spearmen",
+        "Camels"
+      ],
+      "group": "cavalry",
+      "civ_answers": []
+    },
+    "Jarl": {
+      "generic": [
+        "Spearmen",
+        "Camels"
+      ],
+      "group": "cavalry",
+      "civ_answers": []
+    },
+    "Winged Hussar": {
+      "generic": [
+        "Spearmen",
+        "Camels"
+      ],
+      "group": "cavalry",
+      "civ_answers": []
+    },
+    "Savar": {
+      "generic": [
+        "Spearmen",
+        "Camels"
+      ],
+      "group": "cavalry",
+      "civ_answers": []
+    },
+    "Lancer": {
+      "generic": [
+        "Spearmen",
+        "Camels"
+      ],
+      "group": "cavalry",
+      "civ_answers": []
+    },
+    "Huskarl": {
+      "generic": [
+        "Knights",
+        "Militia line",
+        "Hand Cannoneers"
+      ],
+      "group": "infantry",
+      "civ_answers": []
+    },
+    "Varangian Guard": {
+      "generic": [
+        "Knights",
+        "Militia line"
+      ],
+      "group": "infantry",
+      "civ_answers": []
+    },
+    "Jomsviking": {
+      "generic": [
+        "Archers",
+        "Knights"
+      ],
+      "group": "infantry",
+      "civ_answers": []
+    },
+    "Samurai": {
+      "generic": [
+        "Archers",
+        "Knights"
+      ],
+      "group": "infantry",
+      "civ_answers": []
+    },
+    "Condottiero": {
+      "generic": [
+        "Archers",
+        "Knights"
+      ],
+      "group": "infantry",
+      "civ_answers": []
+    },
+    "Kamayuk": {
+      "generic": [
+        "Archers",
+        "Militia line"
+      ],
+      "group": "infantry",
+      "civ_answers": []
+    },
+    "Woad Raider": {
+      "generic": [
+        "Archers",
+        "Knights"
+      ],
+      "group": "infantry",
+      "civ_answers": []
+    },
+    "Shotel Warrior": {
+      "generic": [
+        "Archers",
+        "Knights"
+      ],
+      "group": "infantry",
+      "civ_answers": []
+    },
+    "Teutonic Knight": {
+      "generic": [
+        "Archers",
+        "Monks",
+        "Hand Cannoneers"
+      ],
+      "group": "infantry",
+      "civ_answers": [
+        {
+          "civ": "*",
+          "answer": "Hand Cannoneer",
+          "note": "ignores melee armor"
+        },
+        {
+          "civ": "*",
+          "answer": "Archers",
+          "note": "kite the slow knight"
+        },
+        {
+          "civ": "*",
+          "answer": "Monks",
+          "note": "conversion works despite resistance"
+        }
+      ]
+    },
+    "Obuch": {
+      "generic": [
+        "Archers",
+        "Knights"
+      ],
+      "group": "infantry",
+      "civ_answers": []
+    },
+    "Berserk": {
+      "generic": [
+        "Archers",
+        "Knights"
+      ],
+      "group": "infantry",
+      "civ_answers": []
+    },
+    "Jaguar Warrior": {
+      "generic": [
+        "Archers",
+        "Knights"
+      ],
+      "group": "infantry",
+      "civ_answers": []
+    },
+    "Karambit Warrior": {
+      "generic": [
+        "Archers",
+        "Mangonels",
+        "Scorpions"
+      ],
+      "group": "infantry",
+      "civ_answers": []
+    },
+    "Ghulam": {
+      "generic": [
+        "Knights",
+        "Militia line"
+      ],
+      "group": "infantry",
+      "civ_answers": []
+    },
+    "Serjeant": {
+      "generic": [
+        "Archers",
+        "Knights"
+      ],
+      "group": "infantry",
+      "civ_answers": []
+    },
+    "Urumi Swordsman": {
+      "generic": [
+        "Archers",
+        "Knights"
+      ],
+      "group": "infantry",
+      "civ_answers": []
+    },
+    "Temple Guard": {
+      "generic": [
+        "Archers",
+        "Knights"
+      ],
+      "group": "infantry",
+      "civ_answers": []
+    },
+    "Hearth Troop": {
+      "generic": [
+        "Archers",
+        "Knights"
+      ],
+      "group": "infantry",
+      "civ_answers": []
+    },
+    "White Feather Guard": {
+      "generic": [
+        "Archers",
+        "Knights"
+      ],
+      "group": "infantry",
+      "civ_answers": []
+    },
+    "Liao Dao": {
+      "generic": [
+        "Archers",
+        "Knights"
+      ],
+      "group": "infantry",
+      "civ_answers": []
+    },
+    "Guecha Warrior": {
+      "generic": [
+        "Archers",
+        "Knights"
+      ],
+      "group": "infantry",
+      "civ_answers": []
+    },
+    "Kona": {
+      "generic": [
+        "Archers",
+        "Knights"
+      ],
+      "group": "infantry",
+      "civ_answers": []
+    },
+    "Dismounted Konnik": {
+      "generic": [
+        "Archers",
+        "Knights"
+      ],
+      "group": "infantry",
+      "civ_answers": []
+    },
+    "Legionary": {
+      "generic": [
+        "Archers",
+        "Knights"
+      ],
+      "group": "infantry",
+      "civ_answers": []
+    },
+    "Jian Swordsman": {
+      "generic": [
+        "Archers",
+        "Knights"
+      ],
+      "group": "infantry",
+      "civ_answers": []
+    }
+  },
+  "fallback": {
+    "ranged": [
+      "Skirmishers",
+      "Mangonels",
+      "Knights"
+    ],
+    "cavalry": [
+      "Spearmen",
+      "Camels",
+      "Monks"
+    ],
+    "infantry": [
+      "Archers",
+      "Scorpions"
+    ],
+    "siege": [
+      "Knights",
+      "Light Cavalry"
+    ],
+    "monk": [
+      "Light Cavalry",
+      "Eagles"
+    ],
+    "navy": [
+      "Galleys",
+      "Fire Galleys"
+    ]
+  }
+}
