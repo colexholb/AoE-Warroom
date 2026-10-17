@@ -1,0 +1,519 @@
+{
+  "arabia": {
+    "name": "Arabia",
+    "type": "open",
+    "tags": ["aggressive", "hunt-forward"],
+    "one_liner": "Open map where early aggression and map control decide the game.",
+    "notes": [
+      "Wall early or expect constant Feudal pressure.",
+      "Forward golds and woodlines are common — scout them.",
+      "Camel and scout play are strong; archers can punish poor walls."
+    ]
+  },
+  "arena": {
+    "name": "Arena",
+    "type": "closed",
+    "tags": ["boom", "fast-imperial", "relic-control"],
+    "one_liner": "Walled bases lead to booming, relic fights and Imperial Age swings.",
+    "notes": [
+      "Fast Imperial or unique-unit push are common plans.",
+      "Control the relics in the center.",
+      "Monks, Onagers and trebs dominate the mid-to-late game."
+    ]
+  },
+  "black forest": {
+    "name": "Black Forest",
+    "type": "closed",
+    "tags": ["boom", "wall", "late-game"],
+    "one_liner": "Dense forest corridors favor walling, booming and massive late-game armies.",
+    "notes": [
+      "Wall the corridors and secure your side of the forest.",
+      "Expect post-Imperial treb and Onager wars.",
+      "Trade through a safe path is essential in team games."
+    ]
+  },
+  "nomad": {
+    "name": "Nomad",
+    "type": "open",
+    "tags": ["land-grab", "fishing", "chaotic-start"],
+    "one_liner": "No starting TC: race to build one, grab shore fish and secure resources.",
+    "notes": [
+      "Villager scouting and early fights over TC spots are normal.",
+      "Fishing ships can give a huge early boost.",
+      "Protect your first Town Center at all costs."
+    ]
+  },
+  "migration": {
+    "name": "Migration",
+    "type": "water",
+    "tags": ["transport", "naval-timing", "expansion"],
+    "one_liner": "Teams start on separate islands; transports and naval timing unlock the mainland.",
+    "notes": [
+      "Secure water before sending villagers across.",
+      "The mainland has the best gold and relics.",
+      "Fire Galleys and Demolition Ships can swing early water fights."
+    ]
+  },
+  "islands": {
+    "name": "Islands",
+    "type": "water",
+    "tags": ["naval", "galley-rush", "late-game"],
+    "one_liner": "Full water map: whoever controls the seas usually wins.",
+    "notes": [
+      "Galley and Fire Galley rushes decide early control.",
+      "Protect fishing ships; raiding wins wars.",
+      "Late game revolves around Galleons, Cannon Galleons and island landings."
+    ]
+  },
+  "team islands": {
+    "name": "Team Islands",
+    "type": "water",
+    "tags": ["naval", "team-play", "landings"],
+    "one_liner": "Larger islands built for team games; dominate water then push together.",
+    "notes": [
+      "Coordinate navy mass with your pocket.",
+      "Look for shallow crossings for early raids.",
+      "Trade cogs are safer than trade carts here."
+    ]
+  },
+  "coastal": {
+    "name": "Coastal",
+    "type": "hybrid",
+    "tags": ["fishing", "land-aggression"],
+    "one_liner": "Shallow shores allow fishing but the main fight is usually on land.",
+    "notes": [
+      "Fish can give an eco edge but don't over-invest in docks.",
+      "Land rushes still work because the coast is shallow.",
+      "Scout for dock drops that threaten your shoreline."
+    ]
+  },
+  "continental": {
+    "name": "Continental",
+    "type": "hybrid",
+    "tags": ["balanced", "map-control"],
+    "one_liner": "A large shared landmass with some water on the edges.",
+    "notes": [
+      "Standard open-map openings apply.",
+      "Water is optional but can secure extra food.",
+      "Control the open center for relics and gold."
+    ]
+  },
+  "highland": {
+    "name": "Highland",
+    "type": "semi-open",
+    "tags": ["defensive", "crossings", "relics"],
+    "one_liner": "Rivers and cliffs split the map; chokepoints matter.",
+    "notes": [
+      "Control the shallows and bridges.",
+      "Walls on crossings stall aggression.",
+      "Relics often spawn in contested no-man's-land."
+    ]
+  },
+  "gold rush": {
+    "name": "Gold Rush",
+    "type": "open",
+    "tags": ["central-objective", "feudal-pressure"],
+    "one_liner": "A huge central gold pile rewards whoever takes it first.",
+    "notes": [
+      "Feudal military pressure on the center pays off.",
+      "Secure the gold with towers or a castle.",
+      "Don't let one player mine the whole pile uncontested."
+    ]
+  },
+  "baltic": {
+    "name": "Baltic",
+    "type": "hybrid",
+    "tags": ["water-ring", "boom", "navy"],
+    "one_liner": "A ring of water around a central land arena.",
+    "notes": [
+      "Naval control raids shore economies.",
+      "The center is open and fights like Arabia.",
+      "Fire Galleys rule the early water."
+    ]
+  },
+  "mediterranean": {
+    "name": "Mediterranean",
+    "type": "water",
+    "tags": ["galley-rush", "shore-control"],
+    "one_liner": "A central sea divides teams; galleys control the tempo.",
+    "notes": [
+      "Mass galleys early and deny enemy fishing.",
+      "Landings behind the navy are game-ending.",
+      "Late game favors Cannon Galleons if water is won."
+    ]
+  },
+  "archipelago": {
+    "name": "Archipelago",
+    "type": "water",
+    "tags": ["naval", "island-hopping"],
+    "one_liner": "Many small islands; expand by sea and raid opponent islands.",
+    "notes": [
+      "Secure nearby islands for resources.",
+      "Transports are vulnerable to navy; escort them.",
+      "Expect a long Imperial navy war."
+    ]
+  },
+  "scandinavia": {
+    "name": "Scandinavia",
+    "type": "hybrid",
+    "tags": ["shore-fish", "forests", "boom"],
+    "one_liner": "Snowy coasts and dense forests favor mixed land and water play.",
+    "notes": [
+      "Shore fish and deep-sea fish are both viable.",
+      "Forests make walling easy but also encourage early tower/ram.",
+      "Relic control on the mainland wins."
+    ]
+  },
+  "mongolia": {
+    "name": "Mongolia",
+    "type": "open",
+    "tags": ["hunt", "mobility", "open"],
+    "one_liner": "Wide open steppe with scattered resources and lots of huntables.",
+    "notes": [
+      "Cavalry and Cavalry Archers feel at home.",
+      "Hunt control can swing early eco.",
+      "Hard to wall; expect raids."
+    ]
+  },
+  "yucatan": {
+    "name": "Yucatan",
+    "type": "semi-open",
+    "tags": ["meso", "wallable", "gold"],
+    "one_liner": "Mesoamerican terrain with easy walls and central gold.",
+    "notes": [
+      "Eagle warriors and archers are popular.",
+      "The jungle walls off easily.",
+      "Fight for the central gold and relics."
+    ]
+  },
+  "salt marsh": {
+    "name": "Salt Marsh",
+    "type": "hybrid",
+    "tags": ["water", "wood-control"],
+    "one_liner": "Marshy wetlands with limited woodlines and shoreline fish.",
+    "notes": [
+      "Wood is sparse; don't waste it.",
+      "Fish and shore fish extend your eco.",
+      "Expect mixed land-water fights."
+    ]
+  },
+  "oasis": {
+    "name": "Oasis",
+    "type": "semi-open",
+    "tags": ["boom", "map-control"],
+    "one_liner": "A central lake surrounded by forests and resources.",
+    "notes": [
+      "Woodlines ring the map; secure the outside.",
+      "The center is open for relics and raids.",
+      "Booming is common, but aggression punishes greed."
+    ]
+  },
+  "ghost lake": {
+    "name": "Ghost Lake",
+    "type": "open",
+    "tags": ["frozen", "open-center"],
+    "one_liner": "A frozen central lake creates an open battlefield.",
+    "notes": [
+      "The ice lake is a natural flanking route.",
+      "Herdables near the edges matter.",
+      "Standard open-map rules apply."
+    ]
+  },
+  "canals": {
+    "name": "Canals",
+    "type": "hybrid",
+    "tags": ["water-channels", "chokepoints"],
+    "one_liner": "Water canals cut through the land, creating natural chokepoints.",
+    "notes": [
+      "Control the canals with towers and ships.",
+      "Land armies need to cross bridges.",
+      "Mixed land-water compositions shine."
+    ]
+  },
+  "crater lake": {
+    "name": "Crater Lake",
+    "type": "semi-open",
+    "tags": ["central-lake", "rim-control"],
+    "one_liner": "Teams circle a central lake; control the rim and the fish.",
+    "notes": [
+      "Water control raids all sides.",
+      "The rim is a natural defensive line.",
+      "Late game often becomes navy + treb."
+    ]
+  },
+  "fortress": {
+    "name": "Fortress",
+    "type": "closed",
+    "tags": ["pre-walled", "boom", "imperial"],
+    "one_liner": "Each player starts inside a fortified area with extra stone.",
+    "notes": [
+      "Booming into Imperial is the default plan.",
+      "Siege and trebs break the walls.",
+      "Relic and gold control outside the bases decides the endgame."
+    ]
+  },
+  "rivers": {
+    "name": "Rivers",
+    "type": "semi-open",
+    "tags": ["crossings", "navy", "defensive"],
+    "one_liner": "Wide rivers with shallows split the map into zones.",
+    "notes": [
+      "Control the shallows early.",
+      "Naval raids can hit exposed economies.",
+      "Expect defensive play until Imperial."
+    ]
+  },
+  "hideout": {
+    "name": "Hideout",
+    "type": "semi-closed",
+    "tags": ["partial-walls", "early-aggro"],
+    "one_liner": "Players start behind partial palisade walls; early aggression still works.",
+    "notes": [
+      "Walls are incomplete — exploit the gaps.",
+      "A quick tower or M@A can breach.",
+      "Booming is viable if you finish your walls."
+    ]
+  },
+  "hill fort": {
+    "name": "Hill Fort",
+    "type": "closed",
+    "tags": ["fortified", "boom", "siege"],
+    "one_liner": "Pre-built walls and towers make early rushes hard.",
+    "notes": [
+      "Expect Fast Castle and boom strategies.",
+      "Siege is needed to break fortified positions.",
+      "Map control outside the walls wins."
+    ]
+  },
+  "steppe": {
+    "name": "Steppe",
+    "type": "open",
+    "tags": ["shared-TCs", "laming", "cavalry"],
+    "one_liner": "Extra Town Centers in the middle spark a race to secure them.",
+    "notes": [
+      "Send villagers to claim central TCs early.",
+      "Cavalry and scouts punish expanding villagers.",
+      "The player who holds the center snowballs."
+    ]
+  },
+  "african clearing": {
+    "name": "African Clearing",
+    "type": "open",
+    "tags": ["elephants", "hunt", "open"],
+    "one_liner": "A wide savanna with herds and aggressive animal spawns.",
+    "notes": [
+      "Control the herds and elephants for food.",
+      "Open terrain favors mobile armies.",
+      "Wall small sections, not the whole map."
+    ]
+  },
+  "amazon tunnel": {
+    "name": "Amazon Tunnel",
+    "type": "closed",
+    "tags": ["single-choke", "boom", "siege"],
+    "one_liner": "A narrow tunnel connects the two sides.",
+    "notes": [
+      "Wall and hold the choke.",
+      "Boom behind the wall.",
+      "Siege and ranged units dominate the tunnel."
+    ]
+  },
+  "atacama": {
+    "name": "Atacama",
+    "type": "open",
+    "tags": ["gold", "open"],
+    "one_liner": "A dry open map with exposed gold piles.",
+    "notes": [
+      "Gold is plentiful but exposed.",
+      "Cavalry and archers thrive.",
+      "Expect constant raiding."
+    ]
+  },
+  "bog islands": {
+    "name": "Bog Islands",
+    "type": "water",
+    "tags": ["marsh", "islands", "naval"],
+    "one_liner": "Swampy islands with limited building room.",
+    "notes": [
+      "Secure the nearest islands fast.",
+      "Wood is tight; plan docks carefully.",
+      "Navy decides who can expand."
+    ]
+  },
+  "cenotes": {
+    "name": "Cenotes",
+    "type": "semi-open",
+    "tags": ["water-holes", "open"],
+    "one_liner": "Open terrain dotted with water holes and shore fish.",
+    "notes": [
+      "Shore fish help early eco.",
+      "The open land rewards aggression.",
+      "Dock drops are possible but risky."
+    ]
+  },
+  "city of lakes": {
+    "name": "City of Lakes",
+    "type": "hybrid",
+    "tags": ["lakes", "chokepoints"],
+    "one_liner": "Many small lakes create natural barriers and fish sources.",
+    "notes": [
+      "Fish extend eco but require docks.",
+      "Lakes channel movement into chokepoints.",
+      "Mixed land-water play."
+    ]
+  },
+  "coastal forest": {
+    "name": "Coastal Forest",
+    "type": "hybrid",
+    "tags": ["forest", "fishing"],
+    "one_liner": "Dense forests line the shore, blending land and water play.",
+    "notes": [
+      "Forests make walling easy.",
+      "Fish give a small boost if contested.",
+      "Expect longer games than pure Arabia."
+    ]
+  },
+  "golden pit": {
+    "name": "Golden Pit",
+    "type": "open",
+    "tags": ["central-gold", "pressure"],
+    "one_liner": "A deep central gold pit surrounded by open terrain.",
+    "notes": [
+      "Fight for the pit from early Feudal.",
+      "Towers and castles on the rim control the gold.",
+      "Whoever mines the pit longest usually wins."
+    ]
+  },
+  "golden swamp": {
+    "name": "Golden Swamp",
+    "type": "open",
+    "tags": ["swamp", "gold", "chokepoints"],
+    "one_liner": "Swampy ground with scattered gold and limited paths.",
+    "notes": [
+      "Movement is restricted by shallow water.",
+      "Control the dry paths.",
+      "Booming is possible if you secure your side."
+    ]
+  },
+  "kilimanjaro": {
+    "name": "Kilimanjaro",
+    "type": "semi-open",
+    "tags": ["elevation", "hills"],
+    "one_liner": "A large central mountain grants elevation advantages.",
+    "notes": [
+      "Hold the high ground for range and attack bonuses.",
+      "The slopes create natural chokepoints.",
+      "Expect ranged and siege play."
+    ]
+  },
+  "mountain pass": {
+    "name": "Mountain Pass",
+    "type": "semi-closed",
+    "tags": ["single-pass", "chokepoint"],
+    "one_liner": "A single mountain pass links the two sides.",
+    "notes": [
+      "Fortify the pass early.",
+      "Boom behind it.",
+      "Siege and ranged units decide the push."
+    ]
+  },
+  "nile delta": {
+    "name": "Nile Delta",
+    "type": "water",
+    "tags": ["delta", "naval", "landings"],
+    "one_liner": "A branching river delta with many small landings.",
+    "notes": [
+      "Control the main water channels.",
+      "Transports can land almost anywhere.",
+      "Mix navy with mobile land units."
+    ]
+  },
+  "pacific islands": {
+    "name": "Pacific Islands",
+    "type": "water",
+    "tags": ["islands", "naval", "expansion"],
+    "one_liner": "Large ocean gaps between resource-rich islands.",
+    "notes": [
+      "Secure your island, then contest neutral ones.",
+      "Naval superiority enables island hops.",
+      "Trade cogs are efficient if routes are safe."
+    ]
+  },
+  "sandbank": {
+    "name": "Sandbank",
+    "type": "water",
+    "tags": ["shallow-water", "naval"],
+    "one_liner": "Shallow sandbanks connect islands for amphibious play.",
+    "notes": [
+      "Demolition Ships punish clustered navies.",
+      "Villagers can walk across shallows.",
+      "Mixed navy and land aggression."
+    ]
+  },
+  "socotra": {
+    "name": "Socotra",
+    "type": "open",
+    "tags": ["tiny", "chaos", "rush"],
+    "one_liner": "A very small island where players start dangerously close.",
+    "notes": [
+      "Expect early aggression and villager fights.",
+      "There is nowhere to run.",
+      "Fast tower, archer or scout plays are common."
+    ]
+  },
+  "wolf hill": {
+    "name": "Wolf Hill",
+    "type": "semi-open",
+    "tags": ["hills", "hunt", "aggressive"],
+    "one_liner": "Hilly terrain with aggressive wolves and scattered resources.",
+    "notes": [
+      "Wolves can kill villagers early.",
+      "Hills give a permanent combat advantage.",
+      "Control the high-ground wood and gold."
+    ]
+  },
+  "acropolis": {
+    "name": "Acropolis",
+    "type": "semi-open",
+    "tags": ["elevation", "relics"],
+    "one_liner": "Teams start on plateaus separated by lower ground.",
+    "notes": [
+      "High ground favors ranged units and siege.",
+      "The center holds relics and gold.",
+      "Drops off the plateau are risky but powerful."
+    ]
+  },
+  "rocky river": {
+    "name": "Rocky River",
+    "type": "semi-open",
+    "tags": ["river", "rocky", "crossings"],
+    "one_liner": "A rocky river with multiple crossings divides the map.",
+    "notes": [
+      "Control the crossings.",
+      "The river slows but doesn't stop land armies.",
+      "Mixed aggression and defensive play."
+    ]
+  },
+  "sacred springs": {
+    "name": "Sacred Springs",
+    "type": "semi-open",
+    "tags": ["springs", "relics", "boom"],
+    "one_liner": "Scattered springs and relics encourage map control.",
+    "notes": [
+      "Hold the central springs for water and relics.",
+      "Open enough for early pressure.",
+      "Good for booming with map control."
+    ]
+  },
+  "serengeti": {
+    "name": "Serengeti",
+    "type": "open",
+    "tags": ["plains", "herds", "mobility"],
+    "one_liner": "Wide plains with large herds and few obstacles.",
+    "notes": [
+      "Cavalry and Cavalry Archers dominate.",
+      "Herds provide fast food.",
+      "Hard to wall; expect raiding."
+    ]
+  }
+}
