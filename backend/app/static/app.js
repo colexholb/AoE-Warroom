@@ -624,8 +624,10 @@ function ExplorePage() {
 
   useEffect(() => {
     const params = new URLSearchParams();
-    const allTags = [...tags, ...focus];
-    if (allTags.length) params.set("tags", allTags.join(","));
+    // AND semantics: each category's selected chips are joined into a single CSV;
+    // the backend requires every selected tag and every selected focus to match.
+    if (tags.size) params.set("tags", [...tags].join(","));
+    if (focus.size) params.set("focus", [...focus].join(","));
     if (units.length) params.set("units", units.join(","));
     if (techs.length) params.set("techs", techs.join(","));
     fetch(`/api/meta/explore?${params}`)
@@ -641,8 +643,17 @@ function ExplorePage() {
     return next;
   };
 
-  const addUnit = (name) => { if (name && !units.includes(name)) setUnits([...units, name]); };
-  const addTech = (name) => { if (name && !techs.includes(name)) setTechs([...techs, name]); };
+  // Strict picker: the dropdown is the source of truth. No free-text chip creation.
+  const addUnit = (e) => {
+    const name = e.target.value;
+    if (name && !units.includes(name)) setUnits([...units, name]);
+    e.target.value = "";
+  };
+  const addTech = (e) => {
+    const name = e.target.value;
+    if (name && !techs.includes(name)) setTechs([...techs, name]);
+    e.target.value = "";
+  };
   const removeUnit = (name) => setUnits(units.filter((u) => u !== name));
   const removeTech = (name) => setTechs(techs.filter((t) => t !== name));
 
@@ -673,11 +684,10 @@ function ExplorePage() {
 
       <section class="filter-section">
         <h2>Must-have units</h2>
-        <datalist id="unit-list">
-          ${options.units.map((u) => html`<option value=${u} />`)}
-        </datalist>
-        <input class="picker-input" list="unit-list" placeholder="Add a unit (e.g. Paladin)"
-               onChange=${(e) => { addUnit(e.target.value); e.target.value = ""; }} />
+        <select class="picker-input" onChange=${addUnit} defaultValue="">
+          <option value="" disabled>Select a unit…</option>
+          ${options.units.map((u) => html`<option value=${u}>${u}</option>`)}
+        </select>
         <div class="chip-group">
           ${units.map((u) => html`<span class="chip" key=${u}>${u} <button onClick=${() => removeUnit(u)}>×</button></span>`)}
         </div>
@@ -685,11 +695,10 @@ function ExplorePage() {
 
       <section class="filter-section">
         <h2>Must-have techs</h2>
-        <datalist id="tech-list">
-          ${options.techs.map((t) => html`<option value=${t} />`)}
-        </datalist>
-        <input class="picker-input" list="tech-list" placeholder="Add a tech (e.g. Bracer)"
-               onChange=${(e) => { addTech(e.target.value); e.target.value = ""; }} />
+        <select class="picker-input" onChange=${addTech} defaultValue="">
+          <option value="" disabled>Select a tech…</option>
+          ${options.techs.map((t) => html`<option value=${t}>${t}</option>`)}
+        </select>
         <div class="chip-group">
           ${techs.map((t) => html`<span class="chip" key=${t}>${t} <button onClick=${() => removeTech(t)}>×</button></span>`)}
         </div>
@@ -708,11 +717,24 @@ function ExplorePage() {
                 </div>
               </div>
               <div class="result-matched">
-                ${c.matched_tags.length > 0 && html`<span class="badge">Matched: ${c.matched_tags.join(", ")}</span>`}
+                ${c.matched_tags.length > 0 && html`<span class="badge">Tags: ${c.matched_tags.join(", ")}</span>`}
+                ${c.matched_focus && c.matched_focus.length > 0 && html`<span class="badge">Focus: ${c.matched_focus.join(", ")}</span>`}
               </div>
+              ${c.focus_gates && Object.keys(c.focus_gates).length > 0 && html`
+                <div class="gate-grid" title="3 gates: bonus or UT, full upgrade chain, tier-1+2 blacksmith upgrades">
+                  ${Object.entries(c.focus_gates).map(([focus, g]) => html`
+                    <span class=${`gate ${g.passes ? "gate-on" : "gate-off"}`} key=${focus}>
+                      <span class="gate-label">${focus}</span>
+                      <span class="gate-checks">
+                        <span title="Bonus / UT benefits this focus">${g.g1 ? "\u2713" : "\u2717"}</span>
+                        <span title="Max unit-line tier reachable">${g.g2 ? "\u2713" : (g.g2 === null ? "-" : "\u2717")}</span>
+                        <span title="Tier-1 + tier-2 blacksmith attack & armor">${g.g3 ? "\u2713" : (g.g3 === null ? "-" : "\u2717")}</span>
+                      </span>
+                    </span>`)}
+                </div>`}
               <p class="small">${c.ideal_comp}</p>
               <div class="chips">
-                ${c.tags.slice(0, 5).map((t) => html`<span class="chip">${t}</span>`)}
+                ${[...(c.playstyle_tags || [])].slice(0, 5).map((t) => html`<span class="chip">${t}</span>`)}
               </div>
             </div>`)}
         </div>
@@ -725,7 +747,8 @@ function ExplorePage() {
 
 function CounterPage({ state }) {
   const [options, setOptions] = useState(null);
-  const [query, setQuery] = useState("");
+  const [enemies, setEnemies] = useState([]);
+  const [pendingUnit, setPendingUnit] = useState("");
   const [results, setResults] = useState(null);
 
   const myTeam = useMemo(() => {
@@ -747,13 +770,27 @@ function CounterPage({ state }) {
     fetch("/api/meta/options").then((r) => r.json()).then(setOptions);
   }, []);
 
-  const search = () => {
-    if (!query) return;
+  // Dynamic fill: trigger the counter search whenever enemies or selected civs
+  // change. Skip the fetch entirely when no enemy has been picked — the
+  // section just isn't rendered, which is the empty-state behavior the
+  // owner asked for. Debounced 200 ms so chip-toggle flaps don't spam.
+  useEffect(() => {
+    if (!options) return;
+    if (enemies.length === 0) { setResults(null); return; }
     const civs = [...selected].join(",");
-    fetch(`/api/meta/counter?unit=${encodeURIComponent(query)}&civs=${encodeURIComponent(civs)}`)
-      .then((r) => r.json())
-      .then(setResults);
+    const url = `/api/meta/counter?units=${encodeURIComponent(enemies.join(","))}&civs=${encodeURIComponent(civs)}`;
+    const handle = setTimeout(() => {
+      fetch(url).then((r) => r.json()).then(setResults);
+    }, 200);
+    return () => clearTimeout(handle);
+  }, [enemies, selected, options]);
+
+  const addEnemy = (e) => {
+    const name = e.target.value;
+    if (name && !enemies.includes(name)) setEnemies([...enemies, name]);
+    setPendingUnit("");
   };
+  const removeEnemy = (name) => setEnemies(enemies.filter((u) => u !== name));
 
   const toggleCiv = (slug) => {
     setSelected((prev) => {
@@ -769,16 +806,16 @@ function CounterPage({ state }) {
   return html`
     <main class="page">
       <h1 class="page-title">Counter lookup</h1>
-      <p class="muted">Type an enemy unit to see what your team's civs can build against it.</p>
+      <p class="muted">Pick the enemy units you're facing. Counters update automatically as you change the roster.</p>
 
       <section class="filter-section counter-search">
-        <datalist id="counter-list">
-          ${options.counter_units.map((u) => html`<option value=${u} />`)}
-        </datalist>
-        <input class="picker-input" list="counter-list" placeholder="Enemy unit (e.g. Scorpion)"
-               value=${query} onInput=${(e) => setQuery(e.target.value)}
-               onKeyDown=${(e) => e.key === "Enter" && search()} />
-        <button class="btn" onClick=${search}>Find counters</button>
+        <select class="picker-input" value=${pendingUnit} onChange=${addEnemy} defaultValue="">
+          <option value="" disabled>Select an enemy unit…</option>
+          ${options.counter_units.map((u) => html`<option value=${u}>${u}</option>`)}
+        </select>
+        <div class="chip-group">
+          ${enemies.map((u) => html`<span class="chip" key=${u}>${u} <button onClick=${() => removeEnemy(u)}>×</button></span>`)}
+        </div>
       </section>
 
       <section class="filter-section">
@@ -793,24 +830,29 @@ function CounterPage({ state }) {
         </div>
       </section>
 
-      ${results && html`
+      ${results && results.answers.length > 0 && html`
         <section class="results">
-          <h2>Answers for ${results.resolved || results.query}</h2>
           ${results.answers.map((a) => html`
             <div class="counter-civ" key=${a.slug}>
               <div class="counter-civ-head">
                 <img class="civ-icon" src=${CIV_ICON(a.slug)} alt="" />
                 <b>${a.name}</b>
               </div>
-              ${a.answers.length === 0
-                ? html`<span class="muted small">No curated answer for this unit.</span>`
+              ${a.enemies.every((e) => e.answers.length === 0)
+                ? html`<span class="muted small">No curated answer for any of these units.</span>`
                 : html`
-                  <div class="counter-answers">
-                    ${a.answers.map((ans, i) => html`
-                      <div class=${`counter-answer${ans.available ? "" : " unavailable"}`} key=${i}>
-                        <span class="counter-answer-text">${ans.answer}</span>
-                        ${ans.note && html`<span class="counter-answer-note">${ans.note}</span>`}
-                        ${!ans.available && html`<span class="badge">unavailable</span>`}
+                  <div class="counter-enemies">
+                    ${a.enemies.map((e, i) => e.answers.length > 0 && html`
+                      <div class="counter-enemy" key=${i}>
+                        <div class="counter-enemy-head">vs ${e.resolved || e.query}</div>
+                        <div class="counter-answers">
+                          ${e.answers.map((ans, j) => html`
+                            <div class=${`counter-answer${ans.available ? "" : " unavailable"}`} key=${j}>
+                              <span class="counter-answer-text">${ans.answer}</span>
+                              ${ans.note && html`<span class="counter-answer-note">${ans.note}</span>`}
+                              ${!ans.available && html`<span class="badge">unavailable</span>`}
+                            </div>`)}
+                        </div>
                       </div>`)}
                   </div>`}
             </div>`)}

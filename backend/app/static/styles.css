@@ -384,15 +384,38 @@ a:hover { text-decoration: underline; }
 .result-head div { display: flex; flex-direction: column; }
 .result-matched { margin-bottom: 8px; }
 .result-card p { margin: 0 0 8px; }
+.gate-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 2px 8px; margin: 6px 0;
+  font-size: 11px;
+}
+.gate {
+  display: flex; align-items: center; gap: 4px; padding: 2px 0;
+  border-radius: 4px;
+}
+.gate-label { color: var(--muted); text-transform: capitalize; flex: 1; }
+.gate-checks { letter-spacing: 1px; }
+.gate-on { color: var(--text); }
+.gate-on .gate-checks span { color: #6cbe6c; font-weight: 700; }
+.gate-off { opacity: 0.55; }
+.gate-off .gate-checks span { color: #c66; }
 
-.counter-search { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-.counter-search .picker-input { flex: 1; min-width: 220px; }
+.counter-search { display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap; flex-direction: column; }
+.counter-search .picker-input { width: 100%; max-width: 360px; }
 .counter-civ {
   background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
   padding: 12px 14px; margin-bottom: 10px;
 }
 .counter-civ-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
 .counter-civ-head img { width: 32px; height: 32px; border-radius: 6px; }
+.counter-enemies { display: grid; gap: 10px; }
+.counter-enemy {
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+}
+.counter-enemy-head {
+  font-size: 12px; text-transform: uppercase; letter-spacing: 0.6px;
+  color: var(--muted); margin-bottom: 6px;
+}
 .counter-answers { display: grid; gap: 6px; }
 .counter-answer {
   display: flex; align-items: center; gap: 10px; flex-wrap: wrap;

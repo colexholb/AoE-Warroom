@@ -211,18 +211,30 @@ async def meta_map(name: str) -> dict:
 
 
 @app.get("/api/meta/explore")
-async def meta_explore(tags: str = "", units: str = "", techs: str = "") -> list[dict]:
+async def meta_explore(
+    tags: str = "",
+    focus: str = "",
+    units: str = "",
+    techs: str = "",
+) -> list[dict]:
+    """AND-filter civs by playstyle tags + unit focus + must-have units/techs."""
     def split(s: str) -> list[str]:
         return [p.strip() for p in s.split(",") if p.strip()]
-    return explore(split(tags), split(units), split(techs))
+    return explore(split(tags), split(focus), split(units), split(techs))
 
 
 @app.get("/api/meta/counter")
-async def meta_counter(unit: str = "", civs: str = "") -> dict:
-    if not unit:
-        raise HTTPException(400, "unit required")
+async def meta_counter(units: str = "", civs: str = "") -> dict:
+    """Resolve counter answers for one or more enemy units.
+
+    `units` is a CSV of enemy unit names (fuzzy-resolved against the
+    counters.json keys). Empty input returns an empty payload without error
+    so the client can use it as a heartbeat while the user has no enemy
+    picked yet.
+    """
+    queries = [p.strip() for p in units.split(",") if p.strip()]
     slugs = [p.strip() for p in civs.split(",") if p.strip()]
-    return meta_counters(unit, slugs)
+    return meta_counters(queries, slugs)
 
 
 app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")
