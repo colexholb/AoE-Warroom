@@ -195,6 +195,12 @@ async def overlay() -> FileResponse:
     return FileResponse(STATIC_DIR / "overlay.html")
 
 
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon() -> FileResponse:
+    """Browsers and OBS ask for this path even when the page links its icon."""
+    return FileResponse(STATIC_DIR / "favicon.svg", media_type="image/svg+xml")
+
+
 @app.get("/civ-icons/{slug}.png")
 async def civ_icon(slug: str) -> FileResponse:
     """Civ icons from aoe2companion's CDN, downloaded once and kept on disk."""
