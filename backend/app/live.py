@@ -19,6 +19,7 @@ from .aoe2companion import Aoe2CompanionClient
 from .playstyle import summarize
 from .record_header import RecordInfo, parse_record
 from .replay_store import ReplayService, game_from_row
+from . import meta
 from .stats import GameContext, analyze_player, team_summary
 
 log = logging.getLogger(__name__)
@@ -181,6 +182,9 @@ class LiveService:
             players.append({**p.__dict__, "is_me": is_me, "side": side, "analysis": None,
                             "loading": p.profile_id is not None, "playstyle": None, "comms": None})
 
+        for p in players:
+            p["civ_meta"] = meta.civ_brief(p["civ_slug"])
+
         self.state.update({
             "status": "live" if live else "finished",
             "match": {
@@ -191,6 +195,7 @@ class LiveService:
                 "is_team_game": _is_team_game(record),
                 "format": _format(record),
                 "my_team": my_team,
+                "map_meta": meta.map_info(record.map_name or ""),
             },
             "players": players,
             "summary": None,
