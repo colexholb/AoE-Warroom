@@ -1,44 +1,37 @@
-import { html, render, useEffect, useState } from "./vendor/preact-htm.js";
+import { html, render, useEffect, useMemo, useState } from "./vendor/preact-htm.js";
 import { CIV_ICON, GROUP_COLORS, colorName, colorOf, pct, useLiveState } from "./common.js";
 
 const games = (n) => `${n} game${n === 1 ? "" : "s"}`;
 const PROFILE_URL = (id) => `https://www.aoe2companion.com/profile/${id}`;
 
+function currentHash() {
+  return (window.location.hash || "#/").replace(/^#\/?/, "") || "/";
+}
+
 function App() {
   const [state, connected] = useLiveState();
-  const [open, setOpen] = useState({});
   const [picking, setPicking] = useState(false);
-  const [hideMine, setHideMine] = useState(() => loadPref("hideMyTeam") === "1");
-  const matchFile = state?.match?.file;
-  useEffect(() => setOpen({}), [matchFile]); // new game: start collapsed
+  const [route, setRoute] = useState(currentHash);
+  useEffect(() => {
+    const onHash = () => setRoute(currentHash());
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
   if (!state) return html`<div class="empty">Connecting…</div>`;
-  const { match, players, summary } = state;
-  const visible = hideMine ? players.filter((p) => p.side === "enemy") : players;
-  const allOpen = visible.length > 0 && visible.every((p) => open[p.number]);
-  const toggleAll = () => setOpen(allOpen ? {} : Object.fromEntries(visible.map((p) => [p.number, true])));
-  const toggle = (n) => setOpen((o) => ({ ...o, [n]: !o[n] }));
-  const toggleMine = () => {
-    savePref("hideMyTeam", hideMine ? "0" : "1");
-    setHideMine(!hideMine);
-  };
   return html`
-    <${TopBar} state=${state} connected=${connected} onPickMe=${() => setPicking(true)} />
+    <${TopBar} state=${state} connected=${connected} onPickMe=${() => setPicking(true)} route=${route} />
     <${RecordingWarning} warning=${state.recording_warning} />
     ${(picking || !state.me) && html`
       <${ProfilePicker} state=${state} onDone=${() => setPicking(false)} closable=${!!state.me} />`}
-    ${!match
-      ? html`<${Waiting} state=${state} />`
-      : html`
-        <${GamePlan} summary=${summary} players=${players} />
-        <div class="toolbar">
-          <button class="btn" onClick=${toggleMine} aria-pressed=${hideMine}>
-            ${hideMine ? "Show my team" : "Hide my team"}
-          </button>
-          <button class="btn" onClick=${toggleAll}>${allOpen ? "Collapse all" : "Expand all"}</button>
-        </div>
-        <${Teams} players=${players} match=${match} open=${open} toggle=${toggle} hideMine=${hideMine} />`}
+    <${Router} state=${state} route=${route} />
     <${Footer} />
   `;
+}
+
+function Router({ state, route }) {
+  if (route === "explore") return html`<${ExplorePage} />`;
+  if (route === "counter") return html`<${CounterPage} state=${state} />`;
+  return html`<${ScoutPage} state=${state} />`;
 }
 
 // Per-browser UI preferences; storage can be blocked, so never let it break the page.
@@ -49,7 +42,6 @@ function savePref(key, value) {
   try { localStorage.setItem(key, value); } catch {}
 }
 
-// Without recordings no game ever shows up, so say so loudly.
 function RecordingWarning({ warning }) {
   if (!warning) return null;
   const turnOn = html`Turn on <b>Record game</b> in AoE2's game settings, or Warroom can't see your games.`;
@@ -62,7 +54,6 @@ function RecordingWarning({ warning }) {
   return text ? html`<div class="banner" role="alert">⚠️ ${text}</div>` : null;
 }
 
-// Who "you" are decides which team is the enemy, so a wrong or missing pick flips everything.
 function ProfilePicker({ state, onDone, closable }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState(null); // null = nothing searched yet
@@ -144,7 +135,7 @@ function Footer() {
   `;
 }
 
-function TopBar({ state, connected, onPickMe }) {
+function TopBar({ state, connected, onPickMe, route }) {
   const { match, status } = state;
   const label = { live: "Live", finished: "Last game", waiting: "Waiting for a game" }[status];
   return html`
@@ -157,6 +148,11 @@ function TopBar({ state, connected, onPickMe }) {
           ${match.started && html` · ${new Date(match.started).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}`}
         </span>`}
       <div class="spacer"></div>
+      <nav class="tabs">
+        <a class=${`tab${route === "/" ? " active" : ""}`} href="#/">Scout</a>
+        <a class=${`tab${route === "explore" ? " active" : ""}`} href="#/explore">Explore</a>
+        <a class=${`tab${route === "counter" ? " active" : ""}`} href="#/counter">Counter</a>
+      </nav>
       ${!connected && html`<span class="status status-offline">Reconnecting…</span>`}
       <a class="btn" href="/overlay?preview" target="_blank" rel="noreferrer"
          title=${`OBS: add a Browser Source with URL ${location.origin}/overlay (transparent; shows the enemy team during live games)`}>
@@ -204,6 +200,38 @@ function Waiting({ state }) {
   `;
 }
 
+// ===================== SCOUT PAGE =====================
+
+function ScoutPage({ state }) {
+  const { match, players, summary } = state;
+  const [open, setOpen] = useState({});
+  const [hideMine, setHideMine] = useState(() => loadPref("hideMyTeam") === "1");
+  const matchFile = match?.file;
+  useEffect(() => setOpen({}), [matchFile]); // new game: start collapsed
+  if (!match) {
+    return html`<${Waiting} state=${state} />`;
+  }
+  const visible = hideMine ? players.filter((p) => p.side === "enemy") : players;
+  const allOpen = visible.length > 0 && visible.every((p) => open[p.number]);
+  const toggleAll = () => setOpen(allOpen ? {} : Object.fromEntries(visible.map((p) => [p.number, true])));
+  const toggle = (n) => setOpen((o) => ({ ...o, [n]: !o[n] }));
+  const toggleMine = () => {
+    savePref("hideMyTeam", hideMine ? "0" : "1");
+    setHideMine(!hideMine);
+  };
+  return html`
+    <${GamePlan} summary=${summary} players=${players} />
+    <${MatchBriefing} match=${match} players=${players} />
+    <div class="toolbar">
+      <button class="btn" onClick=${toggleMine} aria-pressed=${hideMine}>
+        ${hideMine ? "Show my team" : "Hide my team"}
+      </button>
+      <button class="btn" onClick=${toggleAll}>${allOpen ? "Collapse all" : "Expand all"}</button>
+    </div>
+    <${Teams} players=${players} match=${match} open=${open} toggle=${toggle} hideMine=${hideMine} />
+  `;
+}
+
 function GamePlan({ summary, players }) {
   if (!summary) {
     const pending = players.filter((p) => p.loading).length;
@@ -239,6 +267,57 @@ function PlanItem({ icon, title, player, reasons }) {
         <b>${player.name}</b> <span class="muted">(${colorName(player)}, ${player.civ})</span>
       </div>
       <ul>${reasons.map((r) => html`<li>${r}</li>`)}</ul>
+    </div>
+  `;
+}
+
+function MatchBriefing({ match, players }) {
+  const map = match?.map_meta;
+  const [expanded, setExpanded] = useState(null);
+  if (!map) return null;
+  const toggle = (n) => setExpanded(expanded === n ? null : n);
+  return html`
+    <section class="briefing">
+      <div class="briefing-map">
+        <div class="briefing-head">
+          <span class="chip type-${map.type}">${map.type}</span>
+          <span class="briefing-title">${map.name}</span>
+        </div>
+        <p>${map.one_liner}</p>
+        ${map.notes?.length > 0 && html`
+          <ul class="briefing-notes">
+            ${map.notes.map((n) => html`<li>${n}</li>`)}
+          </ul>`}
+      </div>
+      <div class="briefing-civs">
+        ${players.map((p) => html`
+          <${CivBriefChip} key=${p.number} player=${p} open=${expanded === p.number} toggle=${() => toggle(p.number)} />`)}
+      </div>
+    </section>
+  `;
+}
+
+function CivBriefChip({ player: p, open, toggle }) {
+  const meta = p.civ_meta || {};
+  const tags = meta.tags || [];
+  return html`
+    <div class=${`briefing-civ${open ? " open" : ""}`} onClick=${toggle}>
+      <img class="civ-icon" src=${CIV_ICON(p.civ_slug)} alt="" onError=${(e) => (e.target.style.visibility = "hidden")} />
+      <div class="briefing-civ-name">
+        <b>${p.civ}</b>
+        <span class="muted small">${tags.slice(0, 3).join(" · ")}</span>
+      </div>
+      <span class="chevron" aria-hidden="true">${open ? "▾" : "▸"}</span>
+      ${open && html`
+        <div class="briefing-civ-body">
+          <div class="muted small">${meta.type_label}</div>
+          ${meta.ideal_comp && html`<div class="row"><span class="label">Comp</span><span>${meta.ideal_comp}</span></div>`}
+          ${meta.watch_out && html`<div class="row"><span class="label">Watch</span><span>${meta.watch_out}</span></div>`}
+          ${meta.unique_units?.length > 0 && html`
+            <div class="row"><span class="label">UU</span><span class="chips">${meta.unique_units.map((u) => html`<span class="chip">${u}</span>`)}</span></div>`}
+          ${meta.unique_techs?.length > 0 && html`
+            <div class="row"><span class="label">UT</span><span class="chips">${meta.unique_techs.map((t) => html`<span class="chip">${t.name} <span class="muted">(${t.age})</span></span>`)}</span></div>`}
+        </div>`}
     </div>
   `;
 }
@@ -527,6 +606,259 @@ function CardStats({ a, civ, map }) {
 
 function Stat({ label, value, title }) {
   return html`<div class="stat" title=${title}><span>${label}</span><b>${value}</b></div>`;
+}
+
+// ===================== EXPLORE PAGE =====================
+
+function ExplorePage() {
+  const [options, setOptions] = useState(null);
+  const [tags, setTags] = useState(new Set());
+  const [focus, setFocus] = useState(new Set());
+  const [units, setUnits] = useState([]);
+  const [techs, setTechs] = useState([]);
+  const [results, setResults] = useState([]);
+
+  useEffect(() => {
+    fetch("/api/meta/options").then((r) => r.json()).then(setOptions);
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+    // AND semantics: each category's selected chips are joined into a single CSV;
+    // the backend requires every selected tag and every selected focus to match.
+    if (tags.size) params.set("tags", [...tags].join(","));
+    if (focus.size) params.set("focus", [...focus].join(","));
+    if (units.length) params.set("units", units.join(","));
+    if (techs.length) params.set("techs", techs.join(","));
+    fetch(`/api/meta/explore?${params}`)
+      .then((r) => r.json())
+      .then(setResults)
+      .catch(() => setResults([]));
+  }, [tags, focus, units, techs]);
+
+  const toggle = (set, value) => {
+    const next = new Set(set);
+    if (next.has(value)) next.delete(value);
+    else next.add(value);
+    return next;
+  };
+
+  // Strict picker: the dropdown is the source of truth. No free-text chip creation.
+  const addUnit = (e) => {
+    const name = e.target.value;
+    if (name && !units.includes(name)) setUnits([...units, name]);
+    e.target.value = "";
+  };
+  const addTech = (e) => {
+    const name = e.target.value;
+    if (name && !techs.includes(name)) setTechs([...techs, name]);
+    e.target.value = "";
+  };
+  const removeUnit = (name) => setUnits(units.filter((u) => u !== name));
+  const removeTech = (name) => setTechs(techs.filter((t) => t !== name));
+
+  if (!options) return html`<div class="empty">Loading options…</div>`;
+
+  return html`
+    <main class="page">
+      <h1 class="page-title">Explore civilizations</h1>
+      <p class="muted">Pick playstyles, must-have units or technologies to find civs that fit your plan.</p>
+
+      <section class="filter-section">
+        <h2>Playstyle tags</h2>
+        <div class="chip-group">
+          ${options.tags.map((t) => html`
+            <button class=${`chip-toggle${tags.has(t) ? " on" : ""}`}
+                    onClick=${() => setTags(toggle(tags, t))}>${t}</button>`)}
+        </div>
+      </section>
+
+      <section class="filter-section">
+        <h2>Unit focus</h2>
+        <div class="chip-group">
+          ${options.unit_focus.map((f) => html`
+            <button class=${`chip-toggle${focus.has(f) ? " on" : ""}`}
+                    onClick=${() => setFocus(toggle(focus, f))}>${f}</button>`)}
+        </div>
+      </section>
+
+      <section class="filter-section">
+        <h2>Must-have units</h2>
+        <select class="picker-input" onChange=${addUnit} defaultValue="">
+          <option value="" disabled>Select a unit…</option>
+          ${options.units.map((u) => html`<option value=${u}>${u}</option>`)}
+        </select>
+        <div class="chip-group">
+          ${units.map((u) => html`<span class="chip" key=${u}>${u} <button onClick=${() => removeUnit(u)}>×</button></span>`)}
+        </div>
+      </section>
+
+      <section class="filter-section">
+        <h2>Must-have techs</h2>
+        <select class="picker-input" onChange=${addTech} defaultValue="">
+          <option value="" disabled>Select a tech…</option>
+          ${options.techs.map((t) => html`<option value=${t}>${t}</option>`)}
+        </select>
+        <div class="chip-group">
+          ${techs.map((t) => html`<span class="chip" key=${t}>${t} <button onClick=${() => removeTech(t)}>×</button></span>`)}
+        </div>
+      </section>
+
+      <section class="results">
+        <h2>${results.length} recommendation${results.length === 1 ? "" : "s"}</h2>
+        <div class="result-grid">
+          ${results.map((c) => html`
+            <div class="result-card" key=${c.slug}>
+              <div class="result-head">
+                <img class="civ-icon" src=${CIV_ICON(c.slug)} alt="" />
+                <div>
+                  <b>${c.name}</b>
+                  <span class="muted small">${c.type_label}</span>
+                </div>
+              </div>
+              <div class="result-matched">
+                ${c.matched_tags.length > 0 && html`<span class="badge">Tags: ${c.matched_tags.join(", ")}</span>`}
+                ${c.matched_focus && c.matched_focus.length > 0 && html`<span class="badge">Focus: ${c.matched_focus.join(", ")}</span>`}
+              </div>
+              ${c.focus_gates && Object.keys(c.focus_gates).length > 0 && html`
+                <div class="gate-grid" title="3 gates: bonus or UT, full upgrade chain, tier-1+2 blacksmith upgrades">
+                  ${Object.entries(c.focus_gates).map(([focus, g]) => html`
+                    <span class=${`gate ${g.passes ? "gate-on" : "gate-off"}`} key=${focus}>
+                      <span class="gate-label">${focus}</span>
+                      <span class="gate-checks">
+                        <span title="Bonus / UT benefits this focus">${g.g1 ? "\u2713" : "\u2717"}</span>
+                        <span title="Max unit-line tier reachable">${g.g2 ? "\u2713" : (g.g2 === null ? "-" : "\u2717")}</span>
+                        <span title="Tier-1 + tier-2 blacksmith attack & armor">${g.g3 ? "\u2713" : (g.g3 === null ? "-" : "\u2717")}</span>
+                      </span>
+                    </span>`)}
+                </div>`}
+              <p class="small">${c.ideal_comp}</p>
+              <div class="chips">
+                ${[...(c.playstyle_tags || [])].slice(0, 5).map((t) => html`<span class="chip">${t}</span>`)}
+              </div>
+            </div>`)}
+        </div>
+      </section>
+    </main>
+  `;
+}
+
+// ===================== COUNTER PAGE =====================
+
+function CounterPage({ state }) {
+  const [options, setOptions] = useState(null);
+  const [enemies, setEnemies] = useState([]);
+  const [pendingUnit, setPendingUnit] = useState("");
+  const [results, setResults] = useState(null);
+
+  const myTeam = useMemo(() => {
+    return (state?.players || [])
+      .filter((p) => p.side === "me" || p.side === "ally")
+      .map((p) => ({ slug: p.civ_slug, name: p.civ }));
+  }, [state?.players]);
+
+  const [selected, setSelected] = useState(() => new Set(myTeam.map((p) => p.slug)));
+  useEffect(() => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      myTeam.forEach((p) => next.add(p.slug));
+      return next;
+    });
+  }, [myTeam]);
+
+  useEffect(() => {
+    fetch("/api/meta/options").then((r) => r.json()).then(setOptions);
+  }, []);
+
+  // Dynamic fill: trigger the counter search whenever enemies or selected civs
+  // change. Skip the fetch entirely when no enemy has been picked — the
+  // section just isn't rendered, which is the empty-state behavior the
+  // owner asked for. Debounced 200 ms so chip-toggle flaps don't spam.
+  useEffect(() => {
+    if (!options) return;
+    if (enemies.length === 0) { setResults(null); return; }
+    const civs = [...selected].join(",");
+    const url = `/api/meta/counter?units=${encodeURIComponent(enemies.join(","))}&civs=${encodeURIComponent(civs)}`;
+    const handle = setTimeout(() => {
+      fetch(url).then((r) => r.json()).then(setResults);
+    }, 200);
+    return () => clearTimeout(handle);
+  }, [enemies, selected, options]);
+
+  const addEnemy = (e) => {
+    const name = e.target.value;
+    if (name && !enemies.includes(name)) setEnemies([...enemies, name]);
+    setPendingUnit("");
+  };
+  const removeEnemy = (name) => setEnemies(enemies.filter((u) => u !== name));
+
+  const toggleCiv = (slug) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(slug)) next.delete(slug);
+      else next.add(slug);
+      return next;
+    });
+  };
+
+  if (!options) return html`<div class="empty">Loading…</div>`;
+
+  return html`
+    <main class="page">
+      <h1 class="page-title">Counter lookup</h1>
+      <p class="muted">Pick the enemy units you're facing. Counters update automatically as you change the roster.</p>
+
+      <section class="filter-section counter-search">
+        <select class="picker-input" value=${pendingUnit} onChange=${addEnemy} defaultValue="">
+          <option value="" disabled>Select an enemy unit…</option>
+          ${options.counter_units.map((u) => html`<option value=${u}>${u}</option>`)}
+        </select>
+        <div class="chip-group">
+          ${enemies.map((u) => html`<span class="chip" key=${u}>${u} <button onClick=${() => removeEnemy(u)}>×</button></span>`)}
+        </div>
+      </section>
+
+      <section class="filter-section">
+        <h2>Your team</h2>
+        <div class="chip-group">
+          ${(myTeam.length ? myTeam : options.civs)
+            .map((c) => html`
+              <button class=${`chip-toggle${selected.has(c.slug) ? " on" : ""}`}
+                      onClick=${() => toggleCiv(c.slug)}>
+                ${c.name}
+              </button>`)}
+        </div>
+      </section>
+
+      ${results && results.answers.length > 0 && html`
+        <section class="results">
+          ${results.answers.map((a) => html`
+            <div class="counter-civ" key=${a.slug}>
+              <div class="counter-civ-head">
+                <img class="civ-icon" src=${CIV_ICON(a.slug)} alt="" />
+                <b>${a.name}</b>
+              </div>
+              ${a.enemies.every((e) => e.answers.length === 0)
+                ? html`<span class="muted small">No curated answer for any of these units.</span>`
+                : html`
+                  <div class="counter-enemies">
+                    ${a.enemies.map((e, i) => e.answers.length > 0 && html`
+                      <div class="counter-enemy" key=${i}>
+                        <div class="counter-enemy-head">vs ${e.resolved || e.query}</div>
+                        <div class="counter-answers">
+                          ${e.answers.map((ans, j) => html`
+                            <div class=${`counter-answer${ans.available ? "" : " unavailable"}`} key=${j}>
+                              <span class="counter-answer-text">${ans.answer}</span>
+                              ${ans.note && html`<span class="counter-answer-note">${ans.note}</span>`}
+                              ${!ans.available && html`<span class="badge">unavailable</span>`}
+                            </div>`)}
+                        </div>
+                      </div>`)}
+                  </div>`}
+            </div>`)}
+        </section>`}
+    </main>
+  `;
 }
 
 render(html`<${App} />`, document.getElementById("app"));

@@ -17,6 +17,8 @@ from pydantic import BaseModel
 from . import config
 from .aoe2companion import Aoe2CompanionClient, RateLimited
 from .live import LiveService, list_recordings, recent_profile_ids
+from .meta import counters as meta_counters
+from .meta import civ_brief, civ_detail, civ_list, explore, map_info, options
 from .replay_store import ReplayService, ReplayStore
 from .record_header import parse_record
 
@@ -183,6 +185,56 @@ async def civ_icon(slug: str) -> FileResponse:
         icons.mkdir(exist_ok=True)
         path.write_bytes(resp.content)
     return FileResponse(path, headers={"Cache-Control": "max-age=604800"})
+
+
+@app.get("/api/meta/options")
+async def meta_options() -> dict:
+    return options()
+
+
+@app.get("/api/meta/civs")
+async def meta_civs() -> list[dict]:
+    return civ_list()
+
+
+@app.get("/api/meta/civs/{slug}")
+async def meta_civ(slug: str) -> dict:
+    detail = civ_detail(slug)
+    if detail is None:
+        raise HTTPException(404, "civilization not found")
+    return detail
+
+
+@app.get("/api/meta/maps/{name}")
+async def meta_map(name: str) -> dict:
+    return map_info(name)
+
+
+@app.get("/api/meta/explore")
+async def meta_explore(
+    tags: str = "",
+    focus: str = "",
+    units: str = "",
+    techs: str = "",
+) -> list[dict]:
+    """AND-filter civs by playstyle tags + unit focus + must-have units/techs."""
+    def split(s: str) -> list[str]:
+        return [p.strip() for p in s.split(",") if p.strip()]
+    return explore(split(tags), split(focus), split(units), split(techs))
+
+
+@app.get("/api/meta/counter")
+async def meta_counter(units: str = "", civs: str = "") -> dict:
+    """Resolve counter answers for one or more enemy units.
+
+    `units` is a CSV of enemy unit names (fuzzy-resolved against the
+    counters.json keys). Empty input returns an empty payload without error
+    so the client can use it as a heartbeat while the user has no enemy
+    picked yet.
+    """
+    queries = [p.strip() for p in units.split(",") if p.strip()]
+    slugs = [p.strip() for p in civs.split(",") if p.strip()]
+    return meta_counters(queries, slugs)
 
 
 app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")
