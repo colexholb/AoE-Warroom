@@ -63,6 +63,10 @@ after it is used.
 - **Scout** — the original live/last-match view. Above the player cards you'll see a match
   briefing with the map write-up and a chip for each civilization (click to expand bonuses,
   unique units/techs, ideal comp and watch-outs).
+- **Players** — look up any AoE2:DE player by name, profile id or `aoe2companion.com/profile/<id>`
+  link. Shows the same scouting card as Scout for that player, plus a panel with their ELO on
+  RM 1v1 Ranked, RM Team Ranked, and Team Quick Play. Deep-link any search:
+  `http://localhost:8000/#/players?q=<profile_id>`.
 - **Explore** — before queueing, pick playstyle tags, must-have units and technologies to get a
   ranked list of recommended civilizations.
 - **Counter** — during a game, type an enemy unit (e.g. "Scorpion") and see concrete counters

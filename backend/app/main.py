@@ -19,6 +19,7 @@ from .aoe2companion import Aoe2CompanionClient, RateLimited
 from .live import LiveService, list_recordings, recent_profile_ids
 from .meta import counters as meta_counters
 from .meta import civ_brief, civ_detail, civ_list, explore, map_info, options
+from .player_search import scout_player, stream_playstyle
 from .replay_store import ReplayService, ReplayStore
 from .record_header import parse_record
 
@@ -189,6 +190,51 @@ class MeRequest(BaseModel):
 async def set_me(req: MeRequest) -> dict:
     await app.state.live.set_me(req.profile_id)
     return {"ok": True}
+
+
+class PlayerScoutRequest(BaseModel):
+    profile_id: int
+
+
+@app.post("/api/players/scout")
+async def players_scout(req: PlayerScoutRequest) -> dict:
+    """Assembled Scout-style card for any aoe2companion profile (no live game needed).
+
+    Same shape the Scout page publishes per opponent: player identity, three-mode
+    ELO panel, and a full `analyze_player` output (insights, ratings, etc.).
+    The slow replay pass streams separately at `/api/players/playstyle`.
+    """
+    service: LiveService = app.state.live
+    try:
+        return await scout_player(service.client, req.profile_id)
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code == 404:
+            raise HTTPException(404, "no such profile")
+        raise HTTPException(502, f"aoe2companion answered {e.response.status_code}")
+    except RateLimited as e:
+        raise HTTPException(429, str(e))
+
+
+@app.get("/api/players/playstyle")
+async def players_playstyle(profile_id: int, civ_slug: str | None = None) -> StreamingResponse:
+    """Stream the replay-driven playstyle summary for one player (slow pass).
+
+    Independent of the live SSE channel — opening this from the Players tab never
+    delays live-game updates. Format matches `/api/events`:
+      - one or more `data: {"status":"loading","done":N,"target":M}\\n\\n` lines,
+      - one final `data: {"status":"done", "summary": …}\\n\\n` line with the same keys
+        the Scout page puts on `state.players[i].playstyle` (output of `summarize()`).
+    """
+    service: LiveService = app.state.live
+
+    async def stream():
+        async for chunk in stream_playstyle(service.client, service.replays, profile_id):
+            yield chunk
+
+    return StreamingResponse(
+        stream(), media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache"},
+    )
 
 
 @app.get("/overlay")
