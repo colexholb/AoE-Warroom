@@ -23,7 +23,7 @@ function App() {
     <${RecordingWarning} warning=${state.recording_warning} viaApi=${state.detect !== "folder"} />
     ${(picking || !state.me) && html`
       <${ProfilePicker} state=${state} onDone=${() => setPicking(false)} closable=${!!state.me} />`}
-    <${Router} state=${state} route=${route} />
+    <div class="route"><${Router} state=${state} route=${route} /></div>
     <${Footer} />
   `;
 }

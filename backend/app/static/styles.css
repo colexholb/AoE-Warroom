@@ -20,6 +20,10 @@ body {
   color: var(--text);
   font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
 }
+/* Column filling the window so the footer sits at the bottom even on short pages. */
+#app { min-height: 100vh; display: flex; flex-direction: column; }
+/* One element around the current tab: Preact misplaces the footer when swapping multi-root pages. */
+.route { flex: 1; }
 
 a { color: inherit; text-decoration: none; }
 a:hover { text-decoration: underline; }
