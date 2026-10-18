@@ -86,9 +86,9 @@ def _started(m: dict) -> datetime | None:
     return datetime.fromisoformat(s.replace("Z", "+00:00"))
 
 
-def _same_kind(team_counts: Counter, is_team: bool) -> bool:
-    """True if `team_counts` looks like a team game iff `is_team`."""
-    return any(n > 1 for n in team_counts.values()) == is_team
+def _is_team_match(team_counts: Counter, is_team_game: bool) -> bool:
+    """True if `team_counts` looks like a team game iff `is_team_game`."""
+    return any(n > 1 for n in team_counts.values()) == is_team_game
 
 
 async def _replay_queue(
@@ -117,7 +117,7 @@ async def _replay_queue(
         if when is None or when >= cutoff:
             continue
         teams = Counter(t["teamId"] for t in m.get("teams", []) for _ in t["players"])
-        is_team = _same_kind(teams, is_team_game=True)
+        is_team = _is_team_match(teams, is_team_game=True)
         # Only normal Dark-Age starts have an opening worth reading (skip EW, DM, ...).
         dark_start = m.get("startingAge") == 2 and m.get("gameMode") == "random_map"
         if dark_start and is_team:
@@ -138,7 +138,7 @@ async def _replay_queue(
             if any(abs((when - t).total_seconds()) < 180 for t in results):
                 continue
             local_teams = Counter(pl["team"] for pl in game.get("players", []) if pl.get("team") is not None)
-            if _same_kind(local_teams, is_team_game=True):
+            if _is_team_match(local_teams, is_team_game=True):
                 queue.append((when, None, game))
     queue.sort(key=lambda item: item[0], reverse=True)
     return queue
