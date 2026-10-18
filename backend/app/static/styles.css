@@ -123,6 +123,7 @@ a:hover { text-decoration: underline; }
 
 .card-head { display: flex; align-items: center; gap: 10px; }
 .civ-icon { width: 40px; height: 40px; border-radius: 6px; background: var(--panel-2); }
+.civ-icon-blank { display: inline-block; opacity: 0.5; }
 .who { flex: 1; min-width: 0; }
 .name { font-size: 16px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sub { color: var(--muted); font-size: 12px; }

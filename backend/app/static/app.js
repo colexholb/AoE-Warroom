@@ -1,11 +1,15 @@
-import { html, render, useEffect, useMemo, useState } from "./vendor/preact-htm.js";
+import { html, render, useEffect, useMemo, useRef, useState } from "./vendor/preact-htm.js";
 import { CIV_ICON, GROUP_COLORS, colorName, colorOf, pct, useLiveState } from "./common.js";
 
 const games = (n) => `${n} game${n === 1 ? "" : "s"}`;
 const PROFILE_URL = (id) => `https://www.aoe2companion.com/profile/${id}`;
 
 function currentHash() {
-  return (window.location.hash || "#/").replace(/^#\/?/, "") || "/";
+  // Strip the leading `#/` (and nothing else after, so paths like `/players` stay
+  // intact). Query string after a `?` is the route's responsibility — `#/players?q=1`
+  // gives route=`players`, and the page reads `location.hash` directly for the query.
+  const h = (window.location.hash || "#/").replace(/^#\/?/, "").split("?")[0];
+  return h || "/";
 }
 
 function App() {
@@ -31,6 +35,7 @@ function App() {
 function Router({ state, route }) {
   if (route === "explore") return html`<${ExplorePage} />`;
   if (route === "counter") return html`<${CounterPage} state=${state} />`;
+  if (route === "players") return html`<${PlayersPage} />`;
   return html`<${ScoutPage} state=${state} />`;
 }
 
@@ -58,25 +63,7 @@ function RecordingWarning({ warning, viaApi }) {
 }
 
 function ProfilePicker({ state, onDone, closable }) {
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState(null); // null = nothing searched yet
-  const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
-  useEffect(() => {
-    const q = query.trim();
-    if (q.length < 2) { setResults(null); setError(null); return; }
-    const timer = setTimeout(async () => {
-      try {
-        const r = await fetch(`/api/profiles/search?q=${encodeURIComponent(q)}`);
-        if (!r.ok) throw new Error((await r.json()).detail || `Search failed (${r.status})`);
-        setResults(await r.json());
-        setError(null);
-      } catch (e) {
-        setError(e.message);
-      }
-    }, 350);
-    return () => clearTimeout(timer);
-  }, [query]);
   const pick = async (profileId) => {
     setSaving(true);
     await fetch("/api/me", {
@@ -97,16 +84,53 @@ function ProfilePicker({ state, onDone, closable }) {
         Warroom needs your AoE2 profile to tell your team from the enemy.
         Search your in-game name, or paste your aoe2companion profile link.
       </p>
-      <input class="picker-input" type="search" placeholder="Your in-game name" autofocus
-             value=${query} onInput=${(e) => setQuery(e.target.value)} disabled=${saving} />
+      <${ProfileSearchInput} onPick=${pick} autoFocus=${true} disabled=${saving} highlightId=${state.me} />
+      ${state.me_source === "picked" && state.detect !== "api" && html`
+        <button class="link" onClick=${() => pick(null)} disabled=${saving}>
+          Forget my pick and auto-detect from recordings
+        </button>`}
+    </section>
+  `;
+}
+
+// Reusable: 350ms-debounced profile search → list of `r.profile_id / r.name / r.avatar /
+// r.clan / r.country / r.games / r.platform / r.in_recordings` rows. Same shape as the
+// existing picker used to call directly; the profile picker and the Players tab both
+// render it. `onPick(profile_id)` is what happens when the user clicks a row — in the
+// picker we POST /api/me; in Players we set `picked` and call /api/players/scout.
+function ProfileSearchInput({ onPick, autoFocus, disabled, highlightId, placeholder }) {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState(null); // null = nothing searched yet
+  const [error, setError] = useState(null);
+  useEffect(() => {
+    const q = query.trim();
+    if (q.length < 2) { setResults(null); setError(null); return; }
+    const timer = setTimeout(async () => {
+      try {
+        const r = await fetch(`/api/profiles/search?q=${encodeURIComponent(q)}`);
+        if (!r.ok) throw new Error((await r.json()).detail || `Search failed (${r.status})`);
+        setResults(await r.json());
+        setError(null);
+      } catch (e) {
+        setError(e.message);
+      }
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [query]);
+  return html`
+    <div>
+      <input class="picker-input" type="search"
+             placeholder=${placeholder || "In-game name, profile id or profile link"}
+             autofocus=${!!autoFocus}
+             value=${query} onInput=${(e) => setQuery(e.target.value)} disabled=${disabled} />
       ${error && html`<div class="error">${error}</div>`}
       ${results && results.length === 0 && html`<div class="muted small">No players found.</div>`}
       ${results && results.length > 0 && html`
         <ul class="picker-results">
           ${results.map((r) => html`
             <li>
-              <button class=${`picker-row${r.profile_id === state.me ? " current" : ""}`}
-                      onClick=${() => pick(r.profile_id)} disabled=${saving}>
+              <button class=${`picker-row${highlightId != null && r.profile_id === highlightId ? " current" : ""}`}
+                      onClick=${() => onPick(r.profile_id)} disabled=${disabled}>
                 ${r.avatar ? html`<img src=${r.avatar} alt="" />` : html`<span class="avatar-blank"></span>`}
                 <span class="picker-who">
                   <span><b>${r.name}</b>${r.clan && html` <span class="muted">[${r.clan}]</span>`}</span>
@@ -116,15 +140,11 @@ function ProfilePicker({ state, onDone, closable }) {
                   </span>
                 </span>
                 ${r.in_recordings && html`<span class="badge">In your recordings</span>`}
-                ${r.profile_id === state.me && html`<span class="badge">Current</span>`}
+                ${highlightId != null && r.profile_id === highlightId && html`<span class="badge">Current</span>`}
               </button>
             </li>`)}
         </ul>`}
-      ${state.me_source === "picked" && state.detect !== "api" && html`
-        <button class="link" onClick=${() => pick(null)} disabled=${saving}>
-          Forget my pick and auto-detect from recordings
-        </button>`}
-    </section>
+    </div>
   `;
 }
 
@@ -157,6 +177,7 @@ function TopBar({ state, connected, onPickMe, route }) {
       <div class="spacer"></div>
       <nav class="tabs">
         <a class=${`tab${route === "/" ? " active" : ""}`} href="#/">Scout</a>
+        <a class=${`tab${route === "players" ? " active" : ""}`} href="#/players">Players</a>
         <a class=${`tab${route === "explore" ? " active" : ""}`} href="#/explore">Explore</a>
         <a class=${`tab${route === "counter" ? " active" : ""}`} href="#/counter">Counter</a>
       </nav>
@@ -362,12 +383,21 @@ function groupBy(items, key) {
   return items.reduce((acc, item) => ((acc[key(item)] ??= []).push(item), acc), {});
 }
 
-function PlayerCard({ player: p, open, toggle }) {
+function PlayerCard({ player: p, open, toggle, hideToggle }) {
   const a = p.analysis;
+  // `PlayerSearch` sets `civ_slug = null` (no game context). Skip the civ icon rather
+  // than request `/civ-icons/null.png` — that 404s the server's slug regex and shows
+  // up as a console network error.
+  const hasCiv = !!p.civ_slug;
   return html`
     <article class=${`card side-${p.side}${open ? " open" : ""}`} style=${{ "--player": colorOf(p) }}>
-      <div class="card-head" onClick=${() => toggle(p.number)} title=${open ? "Collapse" : "Expand"}>
-        <img class="civ-icon" src=${CIV_ICON(p.civ_slug)} alt="" onError=${(e) => (e.target.style.visibility = "hidden")} />
+      <div class="card-head"
+           onClick=${hideToggle ? undefined : () => toggle(p.number)}
+           title=${hideToggle ? "" : (open ? "Collapse" : "Expand")}
+           style=${hideToggle ? "cursor: default" : ""}>
+        ${hasCiv
+          ? html`<img class="civ-icon" src=${CIV_ICON(p.civ_slug)} alt="" onError=${(e) => (e.target.style.visibility = "hidden")} />`
+          : html`<span class="civ-icon civ-icon-blank" aria-hidden="true"></span>`}
         <div class="who">
           <div class="name">
             ${p.profile_id
@@ -384,8 +414,9 @@ function PlayerCard({ player: p, open, toggle }) {
           <div class="rating" title=${`Max ${a.rating.max_rating ?? "?"}`}>
             <b>${a.rating.rating}</b><span>${a.rating.leaderboard}</span>
           </div>`}
-        <span class="chevron" aria-hidden="true">${open ? "▾" : "▸"}</span>
+        ${!hideToggle && html`<span class="chevron" aria-hidden="true">${open ? "▾" : "▸"}</span>`}
       </div>
+      ${p.ratings && html`<${PlayerRatings} ratings=${p.ratings} />`}
       ${p.is_ai ? html`<div class="muted small">AI player</div>` : html`<${Summary} p=${p} />`}
       ${open && !p.is_ai && html`
         <div class="details">
@@ -873,6 +904,154 @@ function CounterPage({ state }) {
                   </div>`}
             </div>`)}
         </section>`}
+    </main>
+  `;
+}
+
+// ===================== PLAYERS PAGE =====================
+
+// Three rated-mode Elo panel. Reads the IDs the backend decides are the three modes
+// (RM 1v1, RM Team, QP Team) and renders a 3-cell grid. Missing entries show "–",
+// hidden profiles get a one-line "Hidden profile" treatment.
+const PLAYER_RATING_LABELS = { rm_1v1: "RM 1v1", rm_team: "RM Team", qp_rm_team: "QP Team" };
+const PLAYER_RATING_ORDER = ["rm_1v1", "rm_team", "qp_rm_team"];
+
+function PlayerRatings({ ratings }) {
+  if (ratings?.hidden) {
+    return html`<div class="ratings-grid hidden"><span>Hidden profile</span></div>`;
+  }
+  return html`
+    <div class="ratings-grid">
+      ${PLAYER_RATING_ORDER.map((lid) => {
+        const r = ratings?.[lid];
+        return html`
+          <div class="ratings-cell">
+            <div class="ratings-cell-name">${PLAYER_RATING_LABELS[lid]}</div>
+            ${r ? html`
+              <div class="ratings-cell-rating"><b>${r.rating ?? "?"}</b></div>
+              <div class="ratings-cell-sub muted small">
+                ${r.max_rating != null && html`max ${r.max_rating} · `}
+                ${r.wins != null && r.losses != null && html`${r.wins}-${r.losses} · `}
+                ${r.games.toLocaleString()} games
+                ${r.rank != null && html` · #${r.rank.toLocaleString()}`}
+              </div>
+            ` : html`<div class="ratings-cell-rating muted">–</div>`}
+          </div>`;
+      })}
+    </div>
+  `;
+}
+
+// Dedicated tab: look up any AoE2:DE player and view the same Scout card the live
+// game uses, with the three-mode ELO panel. Reuses PlayerCard, Summary, Playstyle,
+// CommsTile, etc. — no parallel rendering path.
+function PlayersPage() {
+  const [query, setQuery] = useState("");
+  const [picked, setPicked] = useState(null);          // profile_id currently loaded
+  const [scout, setScout] = useState(null);           // assembled card payload
+  const [scoutError, setScoutError] = useState(null);  // 404 from /api/players/scout
+  const [loading, setLoading] = useState(false);      // scout in flight
+  // Cancel any in-flight playstyle stream on unmount or when a new pick happens.
+  const abortRef = useRef(null);
+
+  // Initial deep-link: #/players?q=17861064 picks and loads on first paint.
+  useEffect(() => {
+    const m = (location.hash.match(/[?&]q=([^&]+)/) || []);
+    if (m[1]) {
+      const raw = decodeURIComponent(m[1]);
+      setQuery(raw);
+      // `^\d+$` has no capture group, so wrap it — otherwise `idMatch[1]` is undefined.
+      const idMatch = raw.match(/^(\d+)$/) || raw.match(/(?:.*\/profile\/)(\d{3,})\/?/);
+      if (idMatch) {
+        const pid = parseInt(idMatch[1], 10);
+        if (Number.isFinite(pid)) {
+          setPicked(pid);
+          void loadPlayer(pid);
+        }
+      }
+    }
+  }, []);
+
+  const loadPlayer = async (profileId) => {
+    if (!profileId) return;
+    // Cancel previous playstyle stream before starting a new one.
+    if (abortRef.current) abortRef.current.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+    setLoading(true);
+    setScout(null);
+    setScoutError(null);
+    try {
+      const r = await fetch("/api/players/scout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profile_id: profileId }),
+        signal: controller.signal,
+      });
+      if (window.__playerProbe) window.__playerProbe({phase: "loadPlayer-response", status: r.status});
+      if (!r.ok) {
+        const detail = (await r.json().catch(() => ({}))).detail || `Search failed (${r.status})`;
+        setScoutError(detail);
+        setLoading(false);
+        return;
+      }
+      const data = await r.json();
+      setScout(data);
+      // Start the slow pass unless this request was cancelled mid-flight.
+      if (!controller.signal.aborted) openPlaystyleStream(profileId, data, controller);
+    } catch (e) {
+      if (e.name !== "AbortError") setScoutError(String(e.message || e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openPlaystyleStream = (profileId, baseScout, controller) => {
+    const es = new EventSource(`/api/players/playstyle?profile_id=${profileId}`);
+    controller.signal.addEventListener("abort", () => es.close());
+    es.onmessage = (e) => {
+      let payload;
+      try { payload = JSON.parse(e.data); } catch { return; }
+      setScout((prev) => {
+        if (!prev || prev.player.profile_id !== profileId) return prev; // late event for old pick
+        if (payload.status === "loading") return { ...prev, playstyle: { status: "loading", done: payload.done, target: payload.target } };
+        if (payload.status === "done") return { ...prev, playstyle: payload };
+        if (payload.status === "error") return { ...prev, playstyle: { status: "error", error: payload.error } };
+        return prev;
+      });
+    };
+    es.onerror = () => { es.close(); };
+  };
+
+  // When the user picks a profile_id from a row in the search widget.
+  const onPick = (profileId) => {
+    // Reflect the pick in the URL so the page is deep-linkable.
+    const next = `#/players?q=${profileId}`;
+    if (location.hash !== next) history.replaceState(null, "", next);
+    setPicked(profileId);
+    void loadPlayer(profileId);
+  };
+
+  const player = scout ? { ...scout.player, analysis: scout.analysis, ratings: scout.ratings, loading, playstyle: scout.playstyle } : null;
+
+  return html`
+    <main class="page">
+      <h1 class="page-title">Player search</h1>
+      <p class="muted">Look up any AoE2:DE player to see their ratings and the same scouting report a live opponent gets.</p>
+
+      <section class="picker-panel players-search">
+        <${ProfileSearchInput} onPick=${onPick} autoFocus=${!picked}
+          highlightId=${picked} disabled=${loading}
+          placeholder="In-game name, profile id, or paste an aoe2companion.com/profile/<id> link" />
+      </section>
+
+      ${loading && !scout && html`<section class="plan muted">Scouting…</section>`}
+      ${scoutError && html`<div class="error">${scoutError}</div>`}
+      ${player && html`
+        <section class=${`teams hide-mine single`}>
+          <${PlayerCard} player=${player} open=${true} hideToggle=${true} />
+        </section>
+      `}
     </main>
   `;
 }
