@@ -98,6 +98,45 @@ def _pick_leaderboard(profile: dict, is_team_game: bool) -> dict | None:
     return max(boards, key=lambda b: b["games"], default=None)
 
 
+# The three rated game modes the Player Search tab shows as a multi-ELO panel. Pulled
+# directly out of `profile.leaderboards[]`; missing entries (player never ranked there,
+# board hidden) become `None` so the UI can render "–" instead of zeros.
+RATED_LEADERBOARD_IDS = ("rm_1v1", "rm_team", "qp_rm_team")
+# Pretty, short mode labels for the ratings panel.
+RATED_LEADERBOARD_LABELS = {
+    "rm_1v1": "RM 1v1",
+    "rm_team": "RM Team",
+    "qp_rm_team": "QP Team",
+}
+
+
+def all_leaderboards(profile: dict) -> dict:
+    """Return the three rated-mode entries the Player Search tab shows.
+
+    The shape is what the page wants to render — flat dict, missing entries are `None`.
+    A wholly-hidden profile (aoe2companion returns `profile.hidden == true`) reports
+    `{"hidden": True}` so the UI can show "Hidden profile" without crashing.
+    """
+    if profile.get("hidden"):
+        return {"hidden": True}
+    by_id = {b.get("leaderboardId"): b for b in profile.get("leaderboards", [])}
+    out: dict = {lid: None for lid in RATED_LEADERBOARD_IDS}
+    for lid in RATED_LEADERBOARD_IDS:
+        board = by_id.get(lid)
+        if not board or not board.get("games"):
+            continue  # absent, or `games == 0` -> "never played"
+        out[lid] = {
+            "rating": board.get("rating"),
+            "max_rating": board.get("maxRating"),
+            "games": int(board.get("games") or 0),
+            "wins": int(board.get("wins") or 0),
+            "losses": int(board.get("losses") or 0),
+            "rank": board.get("rank"),
+            "last_match": board.get("lastMatchTime"),
+        }
+    return out
+
+
 def analyze_player(profile_id: int, profile: dict, matches: list[dict], ctx: GameContext) -> dict:
     games = _past_games(profile_id, matches, ctx.started)
     decided = [g for g in games if g.won is not None]
