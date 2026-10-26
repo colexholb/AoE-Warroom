@@ -16,28 +16,36 @@ function App() {
   const [state, connected] = useLiveState();
   const [picking, setPicking] = useState(false);
   const [route, setRoute] = useState(currentHash);
+  // Shared by the Scout tab and the SSD tab (and the top-bar toggle), so they all
+  // agree on whether your own team is shown.
+  const [hideMine, setHideMine] = useState(() => loadPref("hideMyTeam") === "1");
   useEffect(() => {
     const onHash = () => setRoute(currentHash());
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
   if (!state) return html`<div class="empty">Connecting…</div>`;
+  const toggleMine = () => {
+    savePref("hideMyTeam", hideMine ? "0" : "1");
+    setHideMine(!hideMine);
+  };
   return html`
-    <${TopBar} state=${state} connected=${connected} onPickMe=${() => setPicking(true)} route=${route} />
+    <${TopBar} state=${state} connected=${connected} onPickMe=${() => setPicking(true)}
+                route=${route} hideMine=${hideMine} onToggleMine=${toggleMine} />
     <${RecordingWarning} warning=${state.recording_warning} viaApi=${state.detect !== "folder"} />
     ${(picking || !state.me) && html`
       <${ProfilePicker} state=${state} onDone=${() => setPicking(false)} closable=${!!state.me} />`}
-    <div class="route"><${Router} state=${state} route=${route} /></div>
+    <div class="route"><${Router} state=${state} route=${route} hideMine=${hideMine} onToggleMine=${toggleMine} /></div>
     <${Footer} />
   `;
 }
 
-function Router({ state, route }) {
+function Router({ state, route, hideMine, onToggleMine }) {
   if (route === "explore") return html`<${ExplorePage} />`;
   if (route === "counter") return html`<${CounterPage} state=${state} />`;
   if (route === "players") return html`<${PlayersPage} />`;
-  if (route === "ssd") return html`<${SsdPage} state=${state} />`;
-  return html`<${ScoutPage} state=${state} />`;
+  if (route === "ssd") return html`<${SsdPage} state=${state} hideMine=${hideMine} />`;
+  return html`<${ScoutPage} state=${state} hideMine=${hideMine} onToggleMine=${onToggleMine} />`;
 }
 
 // Per-browser UI preferences; storage can be blocked, so never let it break the page.
@@ -159,7 +167,7 @@ function Footer() {
   `;
 }
 
-function TopBar({ state, connected, onPickMe, route }) {
+function TopBar({ state, connected, onPickMe, route, hideMine, onToggleMine }) {
   const { match, status } = state;
   const label = { live: "Live", finished: "Last game", waiting: "Waiting for a game" }[status];
   return html`
@@ -184,6 +192,11 @@ function TopBar({ state, connected, onPickMe, route }) {
         <a class=${`tab${route === "explore" ? " active" : ""}`} href="#/explore">Explore</a>
         <a class=${`tab${route === "counter" ? " active" : ""}`} href="#/counter">Counter</a>
       </nav>
+      ${route === "ssd" && html`
+        <button class="btn ssd-toggle" onClick=${onToggleMine} aria-pressed=${hideMine}
+                title=${hideMine ? "Show your team" : "Hide your team"}>
+          ${hideMine ? "Show my team" : "Hide my team"}
+        </button>`}
       ${!connected && html`<span class="status status-offline">Reconnecting…</span>`}
       <a class="btn" href="/overlay?preview" target="_blank" rel="noreferrer"
          title=${`OBS: add a Browser Source with URL ${location.origin}/overlay (transparent; shows the enemy team during live games)`}>
@@ -242,10 +255,9 @@ function Waiting({ state }) {
 
 // ===================== SCOUT PAGE =====================
 
-function ScoutPage({ state }) {
+function ScoutPage({ state, hideMine, onToggleMine }) {
   const { match, players, summary } = state;
   const [open, setOpen] = useState({});
-  const [hideMine, setHideMine] = useState(() => loadPref("hideMyTeam") === "1");
   const matchKey = match?.key;
   useEffect(() => setOpen({}), [matchKey]); // new game: start collapsed
   if (!match) {
@@ -255,15 +267,11 @@ function ScoutPage({ state }) {
   const allOpen = visible.length > 0 && visible.every((p) => open[p.number]);
   const toggleAll = () => setOpen(allOpen ? {} : Object.fromEntries(visible.map((p) => [p.number, true])));
   const toggle = (n) => setOpen((o) => ({ ...o, [n]: !o[n] }));
-  const toggleMine = () => {
-    savePref("hideMyTeam", hideMine ? "0" : "1");
-    setHideMine(!hideMine);
-  };
   return html`
     <${GamePlan} summary=${summary} players=${players} />
     <${MatchBriefing} match=${match} players=${players} />
     <div class="toolbar">
-      <button class="btn" onClick=${toggleMine} aria-pressed=${hideMine}>
+      <button class="btn" onClick=${onToggleMine} aria-pressed=${hideMine}>
         ${hideMine ? "Show my team" : "Hide my team"}
       </button>
       <button class="btn" onClick=${toggleAll}>${allOpen ? "Collapse all" : "Expand all"}</button>
@@ -396,7 +404,6 @@ const SSD_ELO_LABELS = {
   rm_1v1: "RM 1v1",
   rm_team: "RM Team",
   qp_rm_team: "QP Team",
-  qp_rm_1v1: "QP 1v1",
   unranked: "Unranked",
 };
 // Short forms for the team header, where the line has to stay narrow.
@@ -404,10 +411,11 @@ const SSD_ELO_SHORT = {
   rm_1v1: "1v1",
   rm_team: "TR",
   qp_rm_team: "TQP",
-  qp_rm_1v1: "QP1v1",
   unranked: "UNR",
 };
-const SSD_ELO_ORDER = ["rm_1v1", "rm_team", "qp_rm_team", "qp_rm_1v1", "unranked"];
+// Four modes: RM 1v1, RM Team, QP Team, Unranked. (QP 1v1 is available from the API
+// but not shown here — the owner narrowed the list for scanability.)
+const SSD_ELO_ORDER = ["rm_1v1", "rm_team", "qp_rm_team", "unranked"];
 
 // The player's ELOs that actually exist. `all_leaderboards` leaves a mode as null when
 // the player never ranked there, and returns {hidden:true} for a hidden profile.
@@ -581,28 +589,18 @@ function useWindowWidth() {
   return width;
 }
 
-function SsdPage({ state }) {
+function SsdPage({ state, hideMine }) {
   const { match, players } = state;
-  const [hideMine, setHideMine] = useState(() => loadPref("hideMyTeam") === "1");
   const width = useWindowWidth();
   if (!match) {
     return html`<${Waiting} state=${state} />`;
   }
-  const toggleMine = () => {
-    savePref("hideMyTeam", hideMine ? "0" : "1");
-    setHideMine(!hideMine);
-  };
   const enemies = players.filter((p) => p.side === "enemy");
   const mine = players.filter((p) => p.side !== "enemy");
   const enemyTeams = groupBy(enemies, (p) => p.team ?? "ffa");
   // Compare our team against the enemy team, per ELO mode (▲ we are stronger).
   const compare = ssdEloCompare(ssdTeamElo(mine), ssdTeamElo(enemies));
   return html`
-    <div class="ssd-toolbar">
-      <button class="btn ssd-toggle" onClick=${toggleMine} aria-pressed=${hideMine}>
-        ${hideMine ? "Show my team" : "Hide my team"}
-      </button>
-    </div>
     <main class="ssd-teams">
       ${Object.entries(enemyTeams).map(([team, ps]) => html`
         <section class="ssd-team">
@@ -690,21 +688,23 @@ function SsdTile({ player: p }) {
         </div>
       </div>
       ${elos.length > 0 && html`
-        <div class="ssd-elo-row">
-          ${elos.map((e, i) => html`
-            ${i > 0 && html`<span class="ssd-sep">|</span>`}
-            <span class="ssd-elo"><span class="ssd-elo-label">${e.label}:</span> <b>${e.rating}</b></span>`)}
+        <div class="ssd-elo-grid">
+          ${elos.map((e) => html`
+            <div class="ssd-elo">
+              <span class="ssd-elo-value">${e.rating}</span>
+              <span class="ssd-elo-label">${e.label}</span>
+            </div>`)}
         </div>`}
       <div class="ssd-kpis">
         ${loading || noReplays
           ? html`
             <${Tile} title="Feudal" label="…" detail="units" />
-            <${Tile} title="TCs" label="…" detail="by 25 min" />
-            <${Tile} title="Castles" label="…" detail="by 25 min" />`
+            <${Tile} title="TCs" label="…" detail="by 25m" />
+            <${Tile} title="Castles" label="…" detail="by 25m" />`
           : html`
             <${Tile} title="Feudal" label=${`${s.avg_feudal_army ?? "–"}`} detail="units" />
-            <${Tile} title="TCs" label=${`${s.avg_tcs_by_25 ?? "–"}`} detail="by 25 min" />
-            <${Tile} title="Castles" label=${`${s.castle_plan.avg_castles_by_25 ?? 0}`} detail="by 25 min" />`}
+            <${Tile} title="TCs" label=${`${s.avg_tcs_by_25 ?? "–"}`} detail="by 25m" />
+            <${Tile} title="Castles" label=${`${s.castle_plan.avg_castles_by_25 ?? 0}`} detail="by 25m" />`}
       </div>
       <div class="ssd-army">
         <div class="ssd-army-head">

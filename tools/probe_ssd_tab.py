@@ -42,10 +42,15 @@ DIAG = r"""(() => {
         name: txt(t.querySelector('.ssd-name')),
         nameColor: t.querySelector('.ssd-name')?.style.color || '',
         sub: txt(t.querySelector('.ssd-sub')),
-        elos: [...t.querySelectorAll('.ssd-elo')].map((e) => ({
+        elos: [...t.querySelectorAll('.ssd-elo-grid .ssd-elo')].map((e) => ({
             label: txt(e.querySelector('.ssd-elo-label')),
-            value: txt(e.querySelector('b')),
+            value: txt(e.querySelector('.ssd-elo-value')),
         })),
+        eloGridCols: getComputedStyle(t.querySelector('.ssd-elo-grid')).gridTemplateColumns.split(' ').length,
+        eloOverflow: (() => {
+            const g = t.querySelector('.ssd-elo-grid');
+            return g.scrollWidth > g.clientWidth + 1;
+        })(),
         kpis: [...t.querySelectorAll('.ssd-kpis .tile')].map((k) => ({
             title: txt(k.querySelector('.tile-title')),
             label: txt(k.querySelector('.tile-label')),
@@ -93,6 +98,8 @@ DIAG = r"""(() => {
         heads,
         grids,
         toggle: txt(document.querySelector('.ssd-toggle')),
+        toggleInTopbar: !!document.querySelector('.topbar .ssd-toggle'),
+        strayToolbar: !!document.querySelector('.ssd-toolbar'),
         briefing: !!document.querySelector('.briefing'),
         plan: !!document.querySelector('.plan'),
         civChips: document.querySelectorAll('.briefing-civ').length,
@@ -200,17 +207,25 @@ async def main() -> int:
                 if not t["nameColor"]:
                     failures.append(f"tile {t['name']}: name is not colored")
 
-            # -- ELOs: labeled, and no bare numbers / placeholders
+            # -- ELOs: a 2-column grid, labeled, no bare numbers / placeholders
             for t in tiles:
                 if not t["elos"]:
                     continue  # a player with no ranked modes shows no ELO block at all
+                if t["eloGridCols"] != 2:
+                    failures.append(f"tile {t['name']}: ELO grid has {t['eloGridCols']} columns, want 2")
+                if t["eloOverflow"]:
+                    failures.append(f"tile {t['name']}: ELO grid overflows horizontally")
                 for e in t["elos"]:
                     label = e["label"] or ""
                     value = e["value"] or ""
-                    if not label.endswith(":"):
+                    if not label:
                         failures.append(f"tile {t['name']}: unlabeled ELO {e}")
                     if not value.isdigit():
                         failures.append(f"tile {t['name']}: placeholder ELO {e}")
+                # only the four modes the owner kept
+                for e in t["elos"]:
+                    if e["label"] not in ("RM 1v1", "RM Team", "QP Team", "Unranked"):
+                        failures.append(f"tile {t['name']}: unexpected ELO mode {e['label']!r}")
 
             # -- the four KPIs
             for t in tiles:
@@ -337,6 +352,10 @@ async def main() -> int:
             # -- the hide/show toggle
             if not data["toggle"] or "team" not in data["toggle"].lower():
                 failures.append(f"toggle button missing or mislabelled ({data['toggle']!r})")
+            if not data["toggleInTopbar"]:
+                failures.append("the hide/show toggle is not in the top bar")
+            if data["strayToolbar"]:
+                failures.append("the old .ssd-toolbar band is still rendered")
 
             print("\n--- result ---")
             print(f"tiles={len(tiles)} heads={len(heads)}")

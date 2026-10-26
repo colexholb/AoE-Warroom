@@ -438,10 +438,15 @@ a:hover { text-decoration: underline; }
 }
 
 /* ---- SSD tab: simplified scout, at a glance on any screen ---- */
-.ssd-toolbar { display: flex; justify-content: flex-end; padding: 12px 20px 0; }
-.ssd-toggle { min-height: 40px; padding: 8px 14px; }
+/* Type scale (Apple-ish: few sizes, strong weight contrast):
+     name      17px / 600   -- who this is
+     big value 17px / 600   -- the number you scan for (ELO, KPI)
+     body      13px / 400   -- civ, army categories
+     label     10.5px / 500 uppercase -- what a number means
+   Everything else inherits. */
+.ssd-toggle { min-height: 34px; padding: 6px 12px; }
 
-.ssd-teams { padding: 12px 20px 40px; display: flex; flex-direction: column; gap: 26px; }
+.ssd-teams { padding: 14px 20px 40px; display: flex; flex-direction: column; gap: 26px; }
 
 .ssd-team-head {
   border-bottom: 1px solid var(--border);
@@ -450,7 +455,7 @@ a:hover { text-decoration: underline; }
 }
 /* Neutral headings: the player colors stay the only saturated thing on the page. */
 .ssd-team-head h2 {
-  font-size: 12px;
+  font-size: 11.5px;
   text-transform: uppercase;
   letter-spacing: 1.2px;
   margin: 0 0 6px;
@@ -465,7 +470,7 @@ a:hover { text-decoration: underline; }
   font-size: 13px;
 }
 .ssd-label {
-  font-size: 10px;
+  font-size: 10.5px;
   text-transform: uppercase;
   letter-spacing: 0.6px;
   color: var(--muted);
@@ -499,10 +504,10 @@ a:hover { text-decoration: underline; }
   border: 1px solid var(--border);
   border-left: 4px solid var(--player);
   border-radius: 10px;
-  padding: 10px 12px;
+  padding: 11px 13px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 9px;
   min-width: 0;
 }
 .ssd-tile.side-me { box-shadow: 0 0 0 1px var(--gold) inset; }
@@ -521,16 +526,44 @@ a:hover { text-decoration: underline; }
 .ssd-who { min-width: 0; flex: 1; }
 .ssd-name-row { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .ssd-name {
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 600;
+  letter-spacing: -0.2px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.ssd-sub { font-size: 12px; color: var(--muted); }
+.ssd-sub { font-size: 13px; color: var(--muted); }
 
-.ssd-elo-row { display: flex; flex-wrap: wrap; gap: 3px 12px; }
-.ssd-tile .ssd-elo-row .ssd-elo-label { font-size: 11px; }
+/* ELOs as a two-column grid: the number on top (the thing you scan for), the mode
+   name underneath. The numbers line up in columns, so they can be compared down
+   the card instead of parsed one at a time. */
+.ssd-elo-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px 10px;
+}
+.ssd-tile .ssd-elo-grid .ssd-elo {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.ssd-tile .ssd-elo-grid .ssd-elo-value {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+  line-height: 1.1;
+}
+.ssd-tile .ssd-elo-grid .ssd-elo-label {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 .ssd-kpis {
   display: grid;
@@ -538,9 +571,15 @@ a:hover { text-decoration: underline; }
   gap: 5px;
 }
 .ssd-kpis .tile { padding: 5px 6px; }
-.ssd-kpis .tile-title { font-size: 9.5px; letter-spacing: 0.3px; }
-.ssd-kpis .tile-label { font-size: 14px; }
-.ssd-kpis .tile-detail { font-size: 9.5px; }
+.ssd-kpis .tile-title { font-size: 10.5px; letter-spacing: 0.4px; }
+.ssd-kpis .tile-label { font-size: 17px; font-weight: 600; letter-spacing: -0.3px; }
+/* The unit must not wrap: "by 25 min" over two lines makes the KPI row ragged. */
+.ssd-kpis .tile-detail {
+  font-size: 10.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 /* Army composition, spelled out instead of a colored bar: no colors here, so the
    player's own color stays the only color on the tile. */
@@ -553,22 +592,21 @@ a:hover { text-decoration: underline; }
 }
 .ssd-army-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; }
 .ssd-army-title {
-  font-size: 10px;
+  font-size: 10.5px;
   text-transform: uppercase;
   letter-spacing: 0.6px;
   color: var(--muted);
 }
 .ssd-army-list { display: flex; flex-wrap: wrap; gap: 2px 10px; }
 .ssd-army-item { display: inline-flex; align-items: baseline; gap: 4px; white-space: nowrap; }
-.ssd-army-label { font-size: 12px; color: var(--text); }
-.ssd-army-share { font-size: 12px; font-weight: 600; }
+.ssd-army-label { font-size: 13px; color: var(--text); }
+.ssd-army-share { font-size: 13px; font-weight: 600; }
 
 @media (max-width: 520px) {
-  .ssd-toolbar { padding-left: 16px; padding-right: 16px; }
   .ssd-teams { padding-left: 16px; padding-right: 16px; }
-  .ssd-tile { padding: 9px 10px; }
-  .ssd-name { font-size: 15px; }
-  .ssd-kpis .tile-title { font-size: 9px; }
-  .ssd-kpis .tile-label { font-size: 13px; }
+  .ssd-tile { padding: 10px 11px; }
+  .ssd-name { font-size: 16px; }
+  .ssd-kpis .tile-title { font-size: 10px; }
+  .ssd-kpis .tile-label { font-size: 16px; }
   .ssd-team-info { font-size: 12.5px; gap: 4px 10px; }
 }
