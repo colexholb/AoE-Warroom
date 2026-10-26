@@ -98,20 +98,25 @@ def _pick_leaderboard(profile: dict, is_team_game: bool) -> dict | None:
     return max(boards, key=lambda b: b["games"], default=None)
 
 
-# The three rated game modes the Player Search tab shows as a multi-ELO panel. Pulled
-# directly out of `profile.leaderboards[]`; missing entries (player never ranked there,
-# board hidden) become `None` so the UI can render "–" instead of zeros.
-RATED_LEADERBOARD_IDS = ("rm_1v1", "rm_team", "qp_rm_team")
+# The rated game modes we show as a multi-ELO panel. Pulled directly out of
+# `profile.leaderboards[]`; missing entries (player never ranked there, board hidden)
+# become `None` so the UI can render "–" instead of zeros.
+#
+# The Players tab renders only the first three (`PLAYER_RATING_ORDER` in app.js). The
+# SSD tab renders all five — it also shows Quick Play 1v1 and Unranked.
+RATED_LEADERBOARD_IDS = ("rm_1v1", "rm_team", "qp_rm_team", "qp_rm_1v1", "unranked")
 # Pretty, short mode labels for the ratings panel.
 RATED_LEADERBOARD_LABELS = {
     "rm_1v1": "RM 1v1",
     "rm_team": "RM Team",
     "qp_rm_team": "QP Team",
+    "qp_rm_1v1": "QP 1v1",
+    "unranked": "Unranked",
 }
 
 
 def all_leaderboards(profile: dict) -> dict:
-    """Return the three rated-mode entries the Player Search tab shows.
+    """Return the rated-mode entries the rating panels show.
 
     The shape is what the page wants to render — flat dict, missing entries are `None`.
     A wholly-hidden profile (aoe2companion returns `profile.hidden == true`) reports

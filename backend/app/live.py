@@ -22,7 +22,7 @@ from .playstyle import summarize
 from .record_header import RecordInfo, parse_record
 from .replay_store import ReplayService, game_from_row
 from . import meta
-from .stats import GameContext, analyze_player, team_summary
+from .stats import GameContext, all_leaderboards, analyze_player, team_summary
 
 log = logging.getLogger(__name__)
 
@@ -237,7 +237,8 @@ class LiveService:
             side = "me" if is_me else (
                 "ally" if my_team is not None and p.team == my_team else "enemy")
             players.append({**p.__dict__, "is_me": is_me, "side": side, "analysis": None,
-                            "loading": p.profile_id is not None, "playstyle": None, "comms": None})
+                            "loading": p.profile_id is not None, "playstyle": None, "comms": None,
+                            "ratings": None})
 
         for p in players:
             p["civ_meta"] = meta.civ_brief(p["civ_slug"])
@@ -288,6 +289,9 @@ class LiveService:
                     self.client.profile(p["profile_id"]), self.client.matches(p["profile_id"]))
                 history[p["profile_id"]] = matches
                 p["analysis"] = analyze_player(p["profile_id"], profile, matches, ctx)
+                # The per-mode ELO panel (the SSD tab). Same profile we already fetched —
+                # no extra API call, no extra rate-limit budget spent.
+                p["ratings"] = all_leaderboards(profile)
             except httpx.HTTPStatusError as e:
                 log.warning("history failed for %s: %s", p["name"], e)
                 p["analysis"] = {"error": f"aoe2companion answered {e.response.status_code}"}
