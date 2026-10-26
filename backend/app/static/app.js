@@ -1,5 +1,5 @@
 import { html, render, useEffect, useMemo, useRef, useState } from "./vendor/preact-htm.js";
-import { CIV_ICON, GROUP_COLORS, colorName, colorOf, pct, useLiveState } from "./common.js";
+import { CIV_ICON, GROUP_COLORS, colorName, colorOf, colorOfText, pct, useLiveState } from "./common.js";
 
 const games = (n) => `${n} game${n === 1 ? "" : "s"}`;
 const PROFILE_URL = (id) => `https://www.aoe2companion.com/profile/${id}`;
@@ -36,6 +36,7 @@ function Router({ state, route }) {
   if (route === "explore") return html`<${ExplorePage} />`;
   if (route === "counter") return html`<${CounterPage} state=${state} />`;
   if (route === "players") return html`<${PlayersPage} />`;
+  if (route === "ssd") return html`<${SsdPage} state=${state} />`;
   return html`<${ScoutPage} state=${state} />`;
 }
 
@@ -177,6 +178,8 @@ function TopBar({ state, connected, onPickMe, route }) {
       <div class="spacer"></div>
       <nav class="tabs">
         <a class=${`tab${route === "/" ? " active" : ""}`} href="#/">Scout</a>
+        <a class=${`tab${route === "ssd" ? " active" : ""}`} href="#/ssd"
+           title="Simplified Scout Dev — the same game, at a glance">SSD</a>
         <a class=${`tab${route === "players" ? " active" : ""}`} href="#/players">Players</a>
         <a class=${`tab${route === "explore" ? " active" : ""}`} href="#/explore">Explore</a>
         <a class=${`tab${route === "counter" ? " active" : ""}`} href="#/counter">Counter</a>
@@ -381,6 +384,304 @@ function Teams({ players, match, open, toggle, hideMine }) {
 
 function groupBy(items, key) {
   return items.reduce((acc, item) => ((acc[key(item)] ??= []).push(item), acc), {});
+}
+
+// ===================== SSD PAGE =====================
+// Simplified Scout Dev: the live game at a glance, for any screen (phone included).
+// One flat tile per player — name (in their color), color, civ, their ELOs, and four
+// KPIs. No civ meta, no map, no expandable detail, no recommendations. Per team, a
+// header with the likely comms partners and the team's average ELO.
+
+const SSD_ELO_LABELS = {
+  rm_1v1: "RM 1v1",
+  rm_team: "RM Team",
+  qp_rm_team: "QP Team",
+  qp_rm_1v1: "QP 1v1",
+  unranked: "Unranked",
+};
+// Short forms for the team header, where the line has to stay narrow.
+const SSD_ELO_SHORT = {
+  rm_1v1: "1v1",
+  rm_team: "TR",
+  qp_rm_team: "TQP",
+  qp_rm_1v1: "QP1v1",
+  unranked: "UNR",
+};
+const SSD_ELO_ORDER = ["rm_1v1", "rm_team", "qp_rm_team", "qp_rm_1v1", "unranked"];
+
+// The player's ELOs that actually exist. `all_leaderboards` leaves a mode as null when
+// the player never ranked there, and returns {hidden:true} for a hidden profile.
+function ssdEloRows(p) {
+  const r = p.ratings;
+  if (!r || r.hidden) return [];
+  return SSD_ELO_ORDER
+    .filter((id) => r[id] && r[id].rating != null)
+    .map((id) => ({ id, label: SSD_ELO_LABELS[id], rating: r[id].rating }));
+}
+
+// The team's average ELO per mode. Nulls are excluded (a player who never ranked in a
+// mode doesn't drag the average down); a mode with no data at all is skipped.
+function ssdTeamElo(players) {
+  return SSD_ELO_ORDER.map((id) => {
+    const values = players
+      .map((p) => p.ratings?.[id]?.rating)
+      .filter((v) => v != null);
+    if (!values.length) return null;
+    return {
+      id,
+      label: SSD_ELO_SHORT[id],
+      rating: Math.round(values.reduce((a, b) => a + b, 0) / values.length),
+    };
+  }).filter(Boolean);
+}
+
+// Compare the two teams' average ELO per mode. Returns a map id -> {mine, theirs, dir}
+// where dir is 1 (we're stronger), -1 (we're weaker) or 0 (even / not comparable).
+// A mode only counts when *both* teams have an average — comparing 1000 against a
+// missing value would be meaningless.
+function ssdEloCompare(mine, theirs) {
+  const byId = (rows) => Object.fromEntries(rows.map((r) => [r.id, r.rating]));
+  const a = byId(mine);
+  const b = byId(theirs);
+  const out = {};
+  for (const id of SSD_ELO_ORDER) {
+    if (a[id] == null || b[id] == null) continue;
+    out[id] = { mine: a[id], theirs: b[id], dir: a[id] === b[id] ? 0 : (a[id] > b[id] ? 1 : -1) };
+  }
+  return out;
+}
+
+// Players on this team who are likely on comms with each other (same team now).
+//
+// The comms data is symmetric — if A lists B, B lists A — so listing every player's
+// partners would print "grundle + The Law" and then "The Law + grundle". Instead we
+// group the team into clusters: each player belongs to the cluster of the first player
+// (in team order) they are connected to, and a cluster is listed once. A lone player
+// with no same-team partner is not a premade, so they are left out entirely.
+function ssdComms(players) {
+  const mine = new Set(players.map((p) => p.number));
+  const partnersOf = new Map();
+  for (const p of players) {
+    partnersOf.set(
+      p.number,
+      new Set(
+        (p.comms?.with ?? [])
+          .filter((w) => w.same_team_now && mine.has(w.number))
+          .map((w) => w.number),
+      ),
+    );
+  }
+  // Union-find over the "are on comms with" relation, so a chain of three is one cluster.
+  const parent = new Map(players.map((p) => [p.number, p.number]));
+  const find = (n) => {
+    while (parent.get(n) !== n) {
+      parent.set(n, parent.get(parent.get(n)));
+      n = parent.get(n);
+    }
+    return n;
+  };
+  const union = (a, b) => {
+    const ra = find(a);
+    const rb = find(b);
+    if (ra !== rb) parent.set(rb, ra);
+  };
+  for (const p of players) {
+    for (const other of partnersOf.get(p.number) ?? []) union(p.number, other);
+  }
+  const clusters = new Map();
+  for (const p of players) {
+    const root = find(p.number);
+    const members = partnersOf.get(p.number) ?? new Set();
+    if (!members.size) continue; // nobody on their team to talk to
+    if (!clusters.has(root)) clusters.set(root, []);
+    clusters.get(root).push(p);
+  }
+  return [...clusters.values()].map((members) => ({
+    players: members,
+    // Only the players who actually talk to someone — a member with no partner of
+    // their own (a chain end) still belongs to the cluster.
+    partners: members.flatMap((p) =>
+      [...(partnersOf.get(p.number) ?? [])].map((n) => players.find((x) => x.number === n)),
+    ),
+  }));
+}
+
+// How many tiles fit side by side at the current window width. Used so a team's tiles
+// always fill their rows evenly (no lone tile stranded on the last row).
+//
+// The rule: pick the largest column count <= the max that fits, that divides the
+// number of players exactly. If none divides evenly (e.g. 5 players), fall back to
+// the largest count that fits, and let the last row hold the remainder — but only
+// when that remainder is at least half a row, otherwise drop to a count that does
+// divide evenly. A 5-player team becomes 5-across, 1-across, or 3+2 depending on width.
+function ssdColumns(count, width) {
+  const max = width < 520 ? 1 : width < 900 ? 2 : width < 1200 ? 3 : 4;
+  if (count <= 1) return 1;
+  // Exact divisors first: every row is full.
+  for (let c = Math.min(max, count); c >= 2; c--) {
+    if (count % c === 0) return c;
+  }
+  // No exact divisor: prefer a split where the last row is at least half full.
+  for (let c = Math.min(max, count); c >= 2; c--) {
+    const rem = count % c;
+    if (rem === 0 || rem * 2 >= c) return c;
+  }
+  return 1;
+}
+
+// Tracks the window width so the grid can lay tiles out evenly.
+function useWindowWidth() {
+  const [width, setWidth] = useState(() => (typeof window === "undefined" ? 1280 : window.innerWidth));
+  useEffect(() => {
+    const onResize = () => setWidth(window.innerWidth);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+  return width;
+}
+
+function SsdPage({ state }) {
+  const { match, players } = state;
+  const [hideMine, setHideMine] = useState(() => loadPref("hideMyTeam") === "1");
+  const width = useWindowWidth();
+  if (!match) {
+    return html`<${Waiting} state=${state} />`;
+  }
+  const toggleMine = () => {
+    savePref("hideMyTeam", hideMine ? "0" : "1");
+    setHideMine(!hideMine);
+  };
+  const enemies = players.filter((p) => p.side === "enemy");
+  const mine = players.filter((p) => p.side !== "enemy");
+  const enemyTeams = groupBy(enemies, (p) => p.team ?? "ffa");
+  // Compare our team against the enemy team, per ELO mode (▲ we are stronger).
+  const compare = ssdEloCompare(ssdTeamElo(mine), ssdTeamElo(enemies));
+  return html`
+    <div class="ssd-toolbar">
+      <button class="btn ssd-toggle" onClick=${toggleMine} aria-pressed=${hideMine}>
+        ${hideMine ? "Show my team" : "Hide my team"}
+      </button>
+    </div>
+    <main class="ssd-teams">
+      ${Object.entries(enemyTeams).map(([team, ps]) => html`
+        <section class="ssd-team">
+          <${SsdTeamHeader} title=${team === "ffa" ? "Opponents" : match.my_team == null ? `Team ${team}` : "Enemy team"}
+                              players=${ps} compare=${compare} side="enemy" />
+          <div class="ssd-grid" style=${{ "--cols": ssdColumns(ps.length, width) }}>
+            ${ps.map((p) => html`<${SsdTile} key=${p.number} player=${p} />`)}
+          </div>
+        </section>`)}
+      ${!hideMine && mine.length > 0 && html`
+        <section class="ssd-team">
+          <${SsdTeamHeader} title=${mine.length > 1 ? "Your team" : "You"} players=${mine}
+                              compare=${compare} side="mine" />
+          <div class="ssd-grid" style=${{ "--cols": ssdColumns(mine.length, width) }}>
+            ${mine.map((p) => html`<${SsdTile} key=${p.number} player=${p} />`)}
+          </div>
+        </section>`}
+    </main>
+  `;
+}
+
+// Comms partners + the team's average ELO, in one line above the team's tiles.
+function SsdTeamHeader({ title, players, compare, side }) {
+  const comms = ssdComms(players);
+  const elos = ssdTeamElo(players);
+  const waiting = players.some((p) => p.comms === null);
+  return html`
+    <header class=${`ssd-team-head side-${side}`}>
+      <h2>${title}</h2>
+      <div class="ssd-team-info">
+        ${comms.length > 0
+          ? html`<span class="ssd-comms">
+              <span class="ssd-label">Comms:</span>
+              ${comms.map((c) => html`
+                <span class="ssd-comms-pair">
+                  ${c.players.map((m, i) => html`
+                    ${i > 0 && html`<span class="ssd-plus">+</span>`}
+                    <span class="ssd-name" style=${{ color: colorOfText(m) }}>${m.name}</span>`)}
+                </span>`)}
+            </span>`
+          : html`<span class="ssd-comms">
+              <span class="ssd-label">Comms:</span>
+              <span class="muted">${waiting ? "…" : "none"}</span>
+            </span>`}
+        ${elos.length > 0 && html`
+          <span class="ssd-elos">
+            ${elos.map((e, i) => {
+              const cmp = compare?.[e.id];
+              // ▲ this team is stronger than the other one, ▼ weaker, ● even.
+              const dir = side === "mine" ? (cmp?.dir ?? 0) : (cmp ? -cmp.dir : 0);
+              const arrow = dir > 0 ? "▲" : dir < 0 ? "▼" : "●";
+              const cls = dir > 0 ? "up" : dir < 0 ? "down" : "even";
+              return html`
+                ${i > 0 && html`<span class="ssd-sep">|</span>`}
+                <span class=${`ssd-elo ssd-elo-${cls}`}
+                      title=${cmp ? `Our team: ${cmp.mine} · Other team: ${cmp.theirs}` : "Not comparable"}>
+                  <span class="ssd-elo-label">${e.label}:</span> <b>${e.rating}</b>
+                  <span class="ssd-arrow" aria-hidden="true">${arrow}</span>
+                </span>`;
+            })}
+          </span>`}
+      </div>
+    </header>
+  `;
+}
+
+// One player, at a glance.
+function SsdTile({ player: p }) {
+  const s = p.playstyle;
+  const loading = !s || s.status === "loading";
+  const noReplays = !loading && !s.games;
+  const elos = ssdEloRows(p);
+  return html`
+    <article class=${`ssd-tile side-${p.side}`} style=${{ "--player": colorOf(p) }}>
+      <div class="ssd-head">
+        <span class="dot" style=${{ background: colorOf(p) }}></span>
+        <div class="ssd-who">
+          <div class="ssd-name-row">
+            <span class="ssd-name" style=${{ color: colorOfText(p) }}>${p.name}</span>
+            ${p.is_me && html`<span class="you">you</span>`}
+          </div>
+          <div class="ssd-sub">
+            ${p.civ}<span class="muted"> · ${colorName(p)}</span>
+          </div>
+        </div>
+      </div>
+      ${elos.length > 0 && html`
+        <div class="ssd-elo-row">
+          ${elos.map((e, i) => html`
+            ${i > 0 && html`<span class="ssd-sep">|</span>`}
+            <span class="ssd-elo"><span class="ssd-elo-label">${e.label}:</span> <b>${e.rating}</b></span>`)}
+        </div>`}
+      <div class="ssd-kpis">
+        ${loading || noReplays
+          ? html`
+            <${Tile} title="Feudal" label="…" detail="units" />
+            <${Tile} title="TCs" label="…" detail="by 25 min" />
+            <${Tile} title="Castles" label="…" detail="by 25 min" />`
+          : html`
+            <${Tile} title="Feudal" label=${`${s.avg_feudal_army ?? "–"}`} detail="units" />
+            <${Tile} title="TCs" label=${`${s.avg_tcs_by_25 ?? "–"}`} detail="by 25 min" />
+            <${Tile} title="Castles" label=${`${s.castle_plan.avg_castles_by_25 ?? 0}`} detail="by 25 min" />`}
+      </div>
+      <div class="ssd-army">
+        <div class="ssd-army-head">
+          <span class="ssd-army-title">Army</span>
+          ${loading || noReplays
+            ? html`<span class="muted">…</span>`
+            : s.army.groups?.length > 0 && html`
+              <span class="ssd-army-list">
+                ${s.army.groups.map((g) => html`
+                  <span class="ssd-army-item">
+                    <span class="ssd-army-label">${g.label}</span>
+                    <span class="ssd-army-share">${Math.round(g.share * 100)}%</span>
+                  </span>`)}
+              </span>`}
+        </div>
+      </div>
+    </article>
+  `;
 }
 
 function PlayerCard({ player: p, open, toggle, hideToggle }) {

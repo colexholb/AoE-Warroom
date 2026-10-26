@@ -436,3 +436,127 @@ a:hover { text-decoration: underline; }
   .briefing { padding-left: 16px; padding-right: 16px; }
   .page { padding-left: 16px; padding-right: 16px; }
 }
+
+/* ---- SSD tab: simplified scout, at a glance on any screen ---- */
+.ssd-toolbar { display: flex; justify-content: flex-end; padding: 12px 20px 0; }
+.ssd-toggle { min-height: 40px; padding: 8px 14px; }
+
+.ssd-teams { padding: 12px 20px 40px; display: flex; flex-direction: column; gap: 26px; }
+
+.ssd-team-head {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+}
+.ssd-team-head h2 {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0 0 6px;
+  color: var(--strong);
+}
+.ssd-team-info {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 14px;
+  font-size: 13px;
+}
+.ssd-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--muted);
+  margin-right: 4px;
+}
+.ssd-comms { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
+.ssd-comms-pair { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 4px; }
+.ssd-plus { color: var(--muted); }
+.ssd-elos { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.ssd-elo { white-space: nowrap; }
+.ssd-elo-label { color: var(--muted); font-size: 11.5px; }
+.ssd-elo b { font-weight: 600; }
+.ssd-sep { color: var(--border); margin: 0 1px; }
+/* ▲ this team is stronger than the other one, ▼ weaker, ● even. */
+.ssd-arrow { font-size: 9px; margin-left: 2px; vertical-align: 1px; }
+.ssd-elo-up .ssd-arrow { color: var(--weak); }
+.ssd-elo-down .ssd-arrow { color: var(--strong); }
+.ssd-elo-even .ssd-arrow { color: var(--muted); }
+
+.ssd-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr));
+  gap: 12px;
+  align-items: stretch;
+}
+.ssd-team { display: flex; flex-direction: column; }
+/* Keep every tile in a row the same height, so the row reads as one band. */
+.ssd-grid > .ssd-tile { height: 100%; }
+.ssd-tile {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--player);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.ssd-tile.side-me { box-shadow: 0 0 0 1px var(--gold) inset; }
+
+.ssd-head { display: flex; align-items: flex-start; gap: 8px; }
+.ssd-who { min-width: 0; flex: 1; }
+.ssd-name-row { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.ssd-name {
+  font-size: 16px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ssd-sub { font-size: 12px; color: var(--muted); }
+
+.ssd-elo-row { display: flex; flex-wrap: wrap; gap: 3px 12px; }
+.ssd-tile .ssd-elo-row .ssd-elo-label { font-size: 11px; }
+
+.ssd-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+}
+.ssd-kpis .tile { padding: 5px 6px; }
+.ssd-kpis .tile-title { font-size: 9.5px; letter-spacing: 0.3px; }
+.ssd-kpis .tile-label { font-size: 14px; }
+.ssd-kpis .tile-detail { font-size: 9.5px; }
+
+/* Army composition, spelled out instead of a colored bar: no colors here, so the
+   player's own color stays the only color on the tile. */
+.ssd-army {
+  background: var(--panel-2);
+  border-radius: 6px;
+  padding: 6px 8px;
+  /* Sit at the bottom of the tile so the army rows line up across a row of tiles. */
+  margin-top: auto;
+}
+.ssd-army-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; }
+.ssd-army-title {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--muted);
+}
+.ssd-army-list { display: flex; flex-wrap: wrap; gap: 2px 10px; }
+.ssd-army-item { display: inline-flex; align-items: baseline; gap: 4px; white-space: nowrap; }
+.ssd-army-label { font-size: 12px; color: var(--text); }
+.ssd-army-share { font-size: 12px; font-weight: 600; }
+
+@media (max-width: 520px) {
+  .ssd-toolbar { padding-left: 16px; padding-right: 16px; }
+  .ssd-teams { padding-left: 16px; padding-right: 16px; }
+  .ssd-tile { padding: 9px 10px; }
+  .ssd-name { font-size: 15px; }
+  .ssd-kpis .tile-title { font-size: 9px; }
+  .ssd-kpis .tile-label { font-size: 13px; }
+  .ssd-team-info { font-size: 12.5px; gap: 4px 10px; }
+}
