@@ -607,8 +607,21 @@ a:hover { text-decoration: underline; }
   padding: 6px 8px;
   /* Sit at the bottom of the tile so the army rows line up across a row of tiles. */
   margin-top: auto;
+  /* Always exactly the same height, whatever the player mixes: the category list
+     gets a fixed two-line box, so a one-type army and a four-type army occupy the
+     same space and every tile's contents line up. */
+  height: 69px;
+  overflow: hidden;
 }
-.ssd-army-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; }
+.ssd-army-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+  /* Two lines of categories; a third line is clipped rather than growing the box. */
+  max-height: 42px;
+  overflow: hidden;
+}
 .ssd-army-title {
   font-size: 10.5px;
   text-transform: uppercase;

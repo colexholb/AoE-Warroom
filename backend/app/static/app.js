@@ -656,20 +656,6 @@ function SsdTeamHeader({ title, players, compare, side }) {
     <header class=${`ssd-team-head side-${side}${split ? " split" : ""}`} ref=${ref}>
       <h2>${title}</h2>
       <div class="ssd-team-info">
-        ${comms.length > 0
-          ? html`<span class="ssd-comms">
-              <span class="ssd-label">Comms:</span>
-              ${comms.map((c) => html`
-                <span class="ssd-comms-pair">
-                  ${c.players.map((m, i) => html`
-                    ${i > 0 && html`<span class="ssd-plus">+</span>`}
-                    <span class="ssd-name" style=${{ color: colorOfText(m) }}>${m.name}</span>`)}
-                </span>`)}
-            </span>`
-          : html`<span class="ssd-comms">
-              <span class="ssd-label">Comms:</span>
-              <span class="muted">${waiting ? "…" : "none"}</span>
-            </span>`}
         ${elos.length > 0 && html`
           <span class="ssd-elos">
             ${elos.map((e, i) => {
@@ -687,6 +673,20 @@ function SsdTeamHeader({ title, players, compare, side }) {
                 </span>`;
             })}
           </span>`}
+        ${comms.length > 0
+          ? html`<span class="ssd-comms">
+              <span class="ssd-label">Comms:</span>
+              ${comms.map((c) => html`
+                <span class="ssd-comms-pair">
+                  ${c.players.map((m, i) => html`
+                    ${i > 0 && html`<span class="ssd-plus">+</span>`}
+                    <span class="ssd-name" style=${{ color: colorOfText(m) }}>${m.name}</span>`)}
+                </span>`)}
+            </span>`
+          : html`<span class="ssd-comms">
+              <span class="ssd-label">Comms:</span>
+              <span class="muted">${waiting ? "…" : "none"}</span>
+            </span>`}
       </div>
     </header>
   `;

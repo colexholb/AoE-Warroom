@@ -28,6 +28,7 @@ DIAG = r"""(() => {
       return {
         title: h.querySelector('h2').textContent,
         split: h.classList.contains('split'),
+        order: [...row.children].map(el => el.className.split(' ')[0]),
         commsTop: cr ? Math.round(cr.top) : null,
         elosTop: er ? Math.round(er.top) : null,
         commsBottom: cr ? Math.round(cr.bottom) : null,
@@ -43,6 +44,7 @@ DIAG = r"""(() => {
     const tiles = [...document.querySelectorAll('.ssd-tile')].map(t => {
       const g = t.querySelector('.ssd-elo-grid');
       const k = t.querySelector('.ssd-kpis');
+      const a = t.querySelector('.ssd-army');
       const gr = g.getBoundingClientRect(), kr = k.getBoundingClientRect();
       return {
         name: t.querySelector('.ssd-name').textContent,
@@ -50,6 +52,8 @@ DIAG = r"""(() => {
         slots: g.children.length,
         gridH: Math.round(gr.height),
         kpiOffset: Math.round(kr.top - gr.top),
+        armyH: Math.round(a.getBoundingClientRect().height),
+        armyItems: a.querySelectorAll('.ssd-army-item').length,
       };
     });
     return JSON.stringify({heads, tiles, overflowX: document.documentElement.scrollWidth - document.documentElement.clientWidth});
@@ -124,9 +128,13 @@ async def main() -> int:
                 for h in d["heads"]:
                     same_line = h["commsTop"] is not None and h["elosTop"] is not None \
                         and abs(h["commsTop"] - h["elosTop"]) < 6
-                    print(f"  team {h['title']!r}: split={h['split']} "
+                    print(f"  team {h['title']!r}: split={h['split']} order={h['order']} "
                           f"commsW={h['commsW']} elosW={h['elosW']} rowW={h['rowW']} "
                           f"sameLine={same_line} elosH={h['elosHeight']}")
+                    # the ELO row comes before the comms
+                    if h["order"][:2] != ["ssd-elos", "ssd-comms"]:
+                        failures.append(f"{width}px team {h['title']}: header order is "
+                                        f"{h['order']}, want ELOs then comms")
                     # the ELO row must not overflow the header
                     if h["elosW"] and h["rowW"] and h["elosW"] > h["rowW"] + 2:
                         failures.append(f"{width}px team {h['title']}: ELO row overflows "
@@ -141,12 +149,16 @@ async def main() -> int:
                 if d["tiles"]:
                     heights = {t["gridH"] for t in d["tiles"]}
                     offsets = {t["kpiOffset"] for t in d["tiles"]}
-                    print(f"  tiles: gridH={heights} kpiOffset={offsets} "
-                          f"filled={[t['filled'] for t in d['tiles']]}")
+                    armies = {t["armyH"] for t in d["tiles"]}
+                    print(f"  tiles: gridH={heights} kpiOffset={offsets} armyH={armies} "
+                          f"filled={[t['filled'] for t in d['tiles']]} "
+                          f"armyItems={[t['armyItems'] for t in d['tiles']]}")
                     if len(heights) > 1:
                         failures.append(f"{width}px: ELO grids have different heights {heights}")
                     if len(offsets) > 1:
                         failures.append(f"{width}px: KPI rows sit at different offsets {offsets}")
+                    if len(armies) > 1:
+                        failures.append(f"{width}px: army sections have different heights {armies}")
                     for t in d["tiles"]:
                         if t["slots"] != 4:
                             failures.append(f"{width}px tile {t['name']}: {t['slots']} ELO slots, want 4")

@@ -70,6 +70,7 @@ DIAG = r"""(() => {
         kpiOffset: Math.round(
             t.querySelector('.ssd-kpis').getBoundingClientRect().top
             - t.querySelector('.ssd-elo-grid').getBoundingClientRect().top),
+        armyH: Math.round(t.querySelector('.ssd-army').getBoundingClientRect().height),
     }));
     const heads = [...document.querySelectorAll('.ssd-team-head')].map((h) => ({
         title: txt(h.querySelector('h2')),
@@ -287,14 +288,17 @@ async def main() -> int:
                     failures.append(f"tile {t['name']}: army shares not descending: {shares}")
 
             # -- every tile must put its assets in the same place, no matter how
-            #    many ELOs the player has
+            #    many ELOs the player has or how their army is composed
             if tiles:
                 grid_heights = {t["gridH"] for t in tiles}
                 kpi_offsets = {t["kpiOffset"] for t in tiles}
+                army_heights = {t["armyH"] for t in tiles}
                 if len(grid_heights) > 1:
                     failures.append(f"tiles have different ELO grid heights {grid_heights}")
                 if len(kpi_offsets) > 1:
                     failures.append(f"tiles put their KPI row at different offsets {kpi_offsets}")
+                if len(army_heights) > 1:
+                    failures.append(f"tiles have different army section heights {army_heights}")
 
             # -- balanced rows: every row is full, or at least half full
             for g in data["grids"]:
