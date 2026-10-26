@@ -506,34 +506,75 @@ function ssdComms(players) {
   }));
 }
 
-// How many tiles fit side by side at the current window width. Used so a team's tiles
-// always fill their rows evenly (no lone tile stranded on the last row).
+// How many tiles fit side by side at the current window width.
 //
-// The rule: pick the largest column count <= the max that fits, that divides the
-// number of players exactly. If none divides evenly (e.g. 5 players), fall back to
-// the largest count that fits, and let the last row hold the remainder — but only
-// when that remainder is at least half a row, otherwise drop to a count that does
-// divide evenly. A 5-player team becomes 5-across, 1-across, or 3+2 depending on width.
+// A team's tiles should fill their rows evenly: no lone tile stranded on a last
+// row (4+1) when a balanced split (2+2 or 3+2) is available. So for each
+// candidate column count we look at how full the last row would be, and prefer
+// the fullest one; ties go to fewer rows, then to more columns (wider tiles).
+//
+//   4 players: 2 cols -> 2+2   3 cols -> 3+1   4 cols -> 4      (2+2 wins)
+//   5 players: 2 cols -> 2+2+1 3 cols -> 3+2   4 cols -> 4+1    (3+2 wins)
+//
+// A team of one is the only case that legitimately shows a row of one.
+// The narrowest a tile may get before we drop to fewer columns. Below this the
+// ELO row wraps badly and the name truncates. 200px was measured against the real
+// tile: the name, civ line and ELO row all still fit without overflowing.
+const SSD_MIN_TILE = 200;
+// Below this a tile stops being readable at all, so we would rather strand a tile
+// on its own row than squeeze the others into illegibility.
+const SSD_MIN_TILE_HARD = 165;
+// Horizontal space between tiles.
+const SSD_GAP = 12;
+// The grid's own side padding (matches .ssd-teams in styles.css).
+const SSD_PAD = 40;
+
 function ssdColumns(count, width) {
-  const max = width < 520 ? 1 : width < 900 ? 2 : width < 1200 ? 3 : 4;
   if (count <= 1) return 1;
-  // Exact divisors first: every row is full.
-  for (let c = Math.min(max, count); c >= 2; c--) {
-    if (count % c === 0) return c;
-  }
-  // No exact divisor: prefer a split where the last row is at least half full.
-  for (let c = Math.min(max, count); c >= 2; c--) {
+  const usable = Math.max(width - SSD_PAD, 1);
+  // The most columns that still leave a readable tile.
+  const maxCols = Math.max(1, Math.floor((usable + SSD_GAP) / (SSD_MIN_TILE_HARD + SSD_GAP)));
+  const hi = Math.min(maxCols, count);
+  // Score every layout, then keep the best one that is still readable.
+  //
+  // The score is a list of criteria compared *numerically* — comparing the arrays
+  // with `<` would compare them as strings ("-4,1,-4" vs "-1,2,-3"), which silently
+  // picks the wrong layout.
+  const better = (a, b) => {
+    for (let i = 0; i < a.length; i++) {
+      if (a[i] !== b[i]) return a[i] < b[i];
+    }
+    return false;
+  };
+  let best = null;      // best balanced layout overall
+  let bestOk = null;    // best balanced layout whose tiles are wide enough
+  for (let c = 1; c <= hi; c++) {
     const rem = count % c;
-    if (rem === 0 || rem * 2 >= c) return c;
+    const lastRow = rem === 0 ? c : rem;   // tiles on the final row
+    const rows = Math.ceil(count / c);
+    const tileWidth = (usable - (c - 1) * SSD_GAP) / c;
+    // Prefer: fullest last row (no stranded tile), then fewest rows, then more columns.
+    const key = [-lastRow, rows, -c];
+    if (!best || better(key, best[0])) best = [key, c, tileWidth];
+    if (tileWidth >= SSD_MIN_TILE && (!bestOk || better(key, bestOk[0]))) {
+      bestOk = [key, c, tileWidth];
+    }
   }
-  return 1;
+  // Use the balanced layout; if it would squeeze the tiles too narrow to read,
+  // fall back to the best balanced layout that still fits legibly.
+  if (best[2] >= SSD_MIN_TILE) return best[1];
+  return bestOk ? bestOk[1] : 1;
 }
 
-// Tracks the window width so the grid can lay tiles out evenly.
+// Tracks the width available for the tile grid. `documentElement.clientWidth` is the
+// layout width *without* the scrollbar (innerWidth includes it), so it is the number
+// that actually matches how wide the grid can be.
 function useWindowWidth() {
-  const [width, setWidth] = useState(() => (typeof window === "undefined" ? 1280 : window.innerWidth));
+  const read = () =>
+    document.documentElement.clientWidth || window.innerWidth || 1280;
+  const [width, setWidth] = useState(read);
   useEffect(() => {
-    const onResize = () => setWidth(window.innerWidth);
+    const onResize = () => setWidth(read());
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
@@ -637,7 +678,7 @@ function SsdTile({ player: p }) {
   return html`
     <article class=${`ssd-tile side-${p.side}`} style=${{ "--player": colorOf(p) }}>
       <div class="ssd-head">
-        <span class="dot" style=${{ background: colorOf(p) }}></span>
+        <span class="ssd-swatch" style=${{ background: colorOf(p) }} aria-hidden="true"></span>
         <div class="ssd-who">
           <div class="ssd-name-row">
             <span class="ssd-name" style=${{ color: colorOfText(p) }}>${p.name}</span>

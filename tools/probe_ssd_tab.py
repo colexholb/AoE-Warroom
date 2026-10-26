@@ -34,7 +34,7 @@ EDGE = r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
 PORT = 8001
 USER_DATA = Path(os.environ.get("TEMP") or ".") / "aoe-warroom-edge-probe-ssd"
 
-WIDTHS = [320, 375, 768, 1280]
+WIDTHS = [320, 375, 520, 768, 912, 1024, 1280, 1440, 1920]
 
 DIAG = r"""(() => {
     const txt = (el) => (el ? el.textContent.replace(/\s+/g, ' ').trim() : null);
@@ -58,9 +58,12 @@ DIAG = r"""(() => {
         hasTagTile: !!t.querySelector('.tag-tile'),
         hasCounter: !!t.querySelector('.tile-counter'),
         hasDetails: !!t.querySelector('.details'),
+        hasDot: !!t.querySelector('.dot'),
+        hasSwatch: !!t.querySelector('.ssd-swatch'),
     }));
     const heads = [...document.querySelectorAll('.ssd-team-head')].map((h) => ({
         title: txt(h.querySelector('h2')),
+        h2Color: getComputedStyle(h.querySelector('h2')).color,
         comms: txt(h.querySelector('.ssd-comms')),
         commsNames: [...h.querySelectorAll('.ssd-comms .ssd-name')].map((n) => n.textContent.trim()),
         elos: [...h.querySelectorAll('.ssd-elos .ssd-elo')].map((e) => ({
@@ -273,7 +276,6 @@ async def main() -> int:
                         same_row = [h for t, h in zip(g["tileTops"], g["tileHeights"]) if t == top]
                         if len(set(same_row)) > 1:
                             failures.append(f"grid: tiles in one row have different heights {same_row}")
-
             # -- nothing that the request excluded
             for t in tiles:
                 if t["hasChevron"]:
@@ -284,6 +286,10 @@ async def main() -> int:
                     failures.append(f"tile {t['name']}: has counter/recommendation advice")
                 if t["hasDetails"]:
                     failures.append(f"tile {t['name']}: has the expanded details block")
+                if t["hasDot"]:
+                    failures.append(f"tile {t['name']}: still uses the colored dot")
+                if not t["hasSwatch"]:
+                    failures.append(f"tile {t['name']}: no color swatch")
             if data["briefing"]:
                 failures.append("map briefing panel is present")
             if data["plan"]:
@@ -307,6 +313,10 @@ async def main() -> int:
                 for e in h["elos"]:
                     if e["arrow"] not in ("▲", "▼", "●"):
                         failures.append(f"team {h['title']}: ELO {e['text']!r} has no arrow")
+                # team headings must be neutral, not a player colour
+                if h["h2Color"] not in ("rgb(155, 144, 129)", "rgb(236, 228, 214)",
+                                        "rgb(217, 164, 65)", "rgb(255, 255, 255)"):
+                    failures.append(f"team {h['title']}: heading colour {h['h2Color']} is not neutral")
 
             # -- the two teams' arrows must be mirrored (we are up where they are down)
             if len(heads) == 2:

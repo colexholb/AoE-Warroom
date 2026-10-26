@@ -448,12 +448,14 @@ a:hover { text-decoration: underline; }
   padding-bottom: 8px;
   margin-bottom: 12px;
 }
+/* Neutral headings: the player colors stay the only saturated thing on the page. */
 .ssd-team-head h2 {
-  font-size: 13px;
+  font-size: 12px;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 1.2px;
   margin: 0 0 6px;
-  color: var(--strong);
+  color: var(--muted);
+  font-weight: 600;
 }
 .ssd-team-info {
   display: flex;
@@ -505,7 +507,17 @@ a:hover { text-decoration: underline; }
 }
 .ssd-tile.side-me { box-shadow: 0 0 0 1px var(--gold) inset; }
 
-.ssd-head { display: flex; align-items: flex-start; gap: 8px; }
+/* The player's color as a thin rail down the left edge of the tile. Replaces the
+   colored dot: same "which color is this" signal, without a floating circle. */
+.ssd-swatch {
+  width: 3px;
+  align-self: stretch;
+  min-height: 30px;
+  border-radius: 2px;
+  flex: none;
+}
+
+.ssd-head { display: flex; align-items: stretch; gap: 9px; }
 .ssd-who { min-width: 0; flex: 1; }
 .ssd-name-row { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .ssd-name {
