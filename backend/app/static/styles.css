@@ -469,6 +469,12 @@ a:hover { text-decoration: underline; }
   gap: 4px 14px;
   font-size: 13px;
 }
+/* When comms and the team ELOs do not both fit on one line, the comms take their
+   own line and the ELO row stays whole. If even alone the ELO row is too wide
+   (a narrow phone), it wraps internally rather than overflowing the page. */
+.ssd-team-head.split .ssd-team-info { flex-direction: column; align-items: flex-start; gap: 4px; }
+.ssd-team-head.split .ssd-elos { flex-wrap: wrap; max-width: 100%; }
+.ssd-team-head.split .ssd-comms { max-width: 100%; }
 .ssd-label {
   font-size: 10.5px;
   text-transform: uppercase;
@@ -479,7 +485,10 @@ a:hover { text-decoration: underline; }
 .ssd-comms { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
 .ssd-comms-pair { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 4px; }
 .ssd-plus { color: var(--muted); }
-.ssd-elos { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+/* Comms names are set smaller than the tile names, so a whole team's worth of
+   premade names can share one line. */
+.ssd-comms .ssd-name { font-size: 13px; font-weight: 600; letter-spacing: -0.1px; }
+.ssd-elos { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; min-width: 0; }
 .ssd-elo { white-space: nowrap; }
 .ssd-elo-label { color: var(--muted); font-size: 11.5px; }
 .ssd-elo b { font-weight: 600; }
@@ -542,12 +551,18 @@ a:hover { text-decoration: underline; }
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 7px 10px;
+  /* Always two rows of two, and each row the same height, so the grid's height
+     never depends on how many ELOs a player actually has — the KPIs and the
+     army row below stay in exactly the same place on every tile. */
+  grid-template-rows: repeat(2, 31px);
 }
 .ssd-tile .ssd-elo-grid .ssd-elo {
   display: flex;
   flex-direction: column;
+  justify-content: flex-start;
   gap: 1px;
   min-width: 0;
+  overflow: hidden;
 }
 .ssd-tile .ssd-elo-grid .ssd-elo-value {
   font-size: 17px;
@@ -564,6 +579,9 @@ a:hover { text-decoration: underline; }
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* A slot for a mode the player has not ranked stays in place (so the KPIs and
+   the army row never move) but shows nothing. */
+.ssd-tile .ssd-elo-grid .ssd-elo.empty { visibility: hidden; }
 
 .ssd-kpis {
   display: grid;

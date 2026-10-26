@@ -622,13 +622,38 @@ function SsdPage({ state, hideMine }) {
   `;
 }
 
-// Comms partners + the team's average ELO, in one line above the team's tiles.
+// Comms partners + the team's average ELO, above the team's tiles.
+//
+// The two segments normally share one line. If they do not both fit, the comms
+// take their own line so the ELO row stays whole and scannable. Whether they
+// fit is measured after render (the content is dynamic), so a resize observer
+// re-checks it.
 function SsdTeamHeader({ title, players, compare, side }) {
   const comms = ssdComms(players);
   const elos = ssdTeamElo(players);
   const waiting = players.some((p) => p.comms === null);
+  const ref = useRef(null);
+  const [split, setSplit] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const check = () => {
+      const row = el.querySelector(".ssd-team-info");
+      if (!row) return;
+      const c = row.querySelector(".ssd-comms");
+      const e = row.querySelector(".ssd-elos");
+      if (!c || !e) return;
+      // Both segments on one line need their widths plus the gap between them.
+      const need = c.scrollWidth + e.scrollWidth + 20;
+      setSplit(need > row.clientWidth);
+    };
+    check();
+    const ro = new ResizeObserver(check);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [comms.length, elos.length, title, players.length]);
   return html`
-    <header class=${`ssd-team-head side-${side}`}>
+    <header class=${`ssd-team-head side-${side}${split ? " split" : ""}`} ref=${ref}>
       <h2>${title}</h2>
       <div class="ssd-team-info">
         ${comms.length > 0
@@ -687,14 +712,19 @@ function SsdTile({ player: p }) {
           </div>
         </div>
       </div>
-      ${elos.length > 0 && html`
-        <div class="ssd-elo-grid">
-          ${elos.map((e) => html`
-            <div class="ssd-elo">
-              <span class="ssd-elo-value">${e.rating}</span>
-              <span class="ssd-elo-label">${e.label}</span>
-            </div>`)}
-        </div>`}
+      <!-- The ELO grid always has all four slots, so the KPIs and the army row stay
+           in the same place on every tile no matter how many ELOs the player has.
+           Modes the player has not ranked are left blank, not omitted. -->
+      <div class="ssd-elo-grid">
+        ${SSD_ELO_ORDER.map((id) => {
+          const e = elos.find((x) => x.id === id);
+          return html`
+            <div class=${`ssd-elo${e ? "" : " empty"}`}>
+              <span class="ssd-elo-value">${e ? e.rating : ""}</span>
+              <span class="ssd-elo-label">${e ? e.label : ""}</span>
+            </div>`;
+        })}
+      </div>
       <div class="ssd-kpis">
         ${loading || noReplays
           ? html`

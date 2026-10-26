@@ -45,6 +45,7 @@ DIAG = r"""(() => {
         elos: [...t.querySelectorAll('.ssd-elo-grid .ssd-elo')].map((e) => ({
             label: txt(e.querySelector('.ssd-elo-label')),
             value: txt(e.querySelector('.ssd-elo-value')),
+            empty: e.classList.contains('empty'),
         })),
         eloGridCols: getComputedStyle(t.querySelector('.ssd-elo-grid')).gridTemplateColumns.split(' ').length,
         eloOverflow: (() => {
@@ -65,6 +66,10 @@ DIAG = r"""(() => {
         hasDetails: !!t.querySelector('.details'),
         hasDot: !!t.querySelector('.dot'),
         hasSwatch: !!t.querySelector('.ssd-swatch'),
+        gridH: Math.round(t.querySelector('.ssd-elo-grid').getBoundingClientRect().height),
+        kpiOffset: Math.round(
+            t.querySelector('.ssd-kpis').getBoundingClientRect().top
+            - t.querySelector('.ssd-elo-grid').getBoundingClientRect().top),
     }));
     const heads = [...document.querySelectorAll('.ssd-team-head')].map((h) => ({
         title: txt(h.querySelector('h2')),
@@ -207,25 +212,34 @@ async def main() -> int:
                 if not t["nameColor"]:
                     failures.append(f"tile {t['name']}: name is not colored")
 
-            # -- ELOs: a 2-column grid, labeled, no bare numbers / placeholders
+            # -- ELOs: a 2-column grid, labeled, no bare numbers / placeholders.
+            #    The grid always has all four slots; modes the player has not
+            #    ranked are blank placeholders (so the KPIs and army row below
+            #    stay in the same place on every tile).
             for t in tiles:
                 if not t["elos"]:
-                    continue  # a player with no ranked modes shows no ELO block at all
+                    continue
                 if t["eloGridCols"] != 2:
                     failures.append(f"tile {t['name']}: ELO grid has {t['eloGridCols']} columns, want 2")
                 if t["eloOverflow"]:
                     failures.append(f"tile {t['name']}: ELO grid overflows horizontally")
+                if len(t["elos"]) != 4:
+                    failures.append(f"tile {t['name']}: {len(t['elos'])} ELO slots, want 4")
                 for e in t["elos"]:
                     label = e["label"] or ""
                     value = e["value"] or ""
+                    if e["empty"]:
+                        # a blank slot must be truly blank
+                        if label or value:
+                            failures.append(f"tile {t['name']}: empty ELO slot shows {e}")
+                        continue
                     if not label:
                         failures.append(f"tile {t['name']}: unlabeled ELO {e}")
                     if not value.isdigit():
                         failures.append(f"tile {t['name']}: placeholder ELO {e}")
-                # only the four modes the owner kept
-                for e in t["elos"]:
-                    if e["label"] not in ("RM 1v1", "RM Team", "QP Team", "Unranked"):
-                        failures.append(f"tile {t['name']}: unexpected ELO mode {e['label']!r}")
+                    # only the four modes the owner kept
+                    if label not in ("RM 1v1", "RM Team", "QP Team", "Unranked"):
+                        failures.append(f"tile {t['name']}: unexpected ELO mode {label!r}")
 
             # -- the four KPIs
             for t in tiles:
@@ -271,6 +285,16 @@ async def main() -> int:
                     failures.append(f"tile {t['name']}: army lists only {items}")
                 if shares != sorted(shares, reverse=True):
                     failures.append(f"tile {t['name']}: army shares not descending: {shares}")
+
+            # -- every tile must put its assets in the same place, no matter how
+            #    many ELOs the player has
+            if tiles:
+                grid_heights = {t["gridH"] for t in tiles}
+                kpi_offsets = {t["kpiOffset"] for t in tiles}
+                if len(grid_heights) > 1:
+                    failures.append(f"tiles have different ELO grid heights {grid_heights}")
+                if len(kpi_offsets) > 1:
+                    failures.append(f"tiles put their KPI row at different offsets {kpi_offsets}")
 
             # -- balanced rows: every row is full, or at least half full
             for g in data["grids"]:
